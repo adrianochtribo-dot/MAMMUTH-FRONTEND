@@ -5,38 +5,25 @@ import { useEffect, useRef, useState } from 'react'
 const EVENTI_URL = 'https://raw.githubusercontent.com/adrianochtribo-dot/MAMMUTH-EV/main/atlas-eventa/europa/italia/lazio/latina/sermoneta/eventi.json'
 
 const CATEGORIA_COLORI: Record<string, string> = {
-  'Spirituale': '#C9A96E',
-  'Religioso': '#C9A96E',
-  'Sagra': '#E67E22',
-  'Gastronomia': '#E67E22',
-  'Cultura': '#3498DB',
-  'Storico': '#3498DB',
-  'Musica': '#9B59B6',
-  'Sport': '#2ECC71',
-  'Teatro': '#E91E63',
+  'FESTA_RELIGIOSA': '#C9A96E',
+  'SAGRA_GASTRONOMICA': '#E67E22',
+  'FESTIVAL_MUSICA': '#9B59B6',
+  'FESTIVAL_ARTE': '#3498DB',
+  'RIEVOCAZIONE_STORICA': '#E74C3C',
+  'FIERA': '#2ECC71',
   'default': '#8B7355',
 }
 
 function getColore(categoria: string): string {
-  if (!categoria) return CATEGORIA_COLORI.default
-  const key = Object.keys(CATEGORIA_COLORI).find(k =>
-    categoria.toLowerCase().includes(k.toLowerCase())
-  )
-  return key ? CATEGORIA_COLORI[key] : CATEGORIA_COLORI.default
+  return CATEGORIA_COLORI[categoria] || CATEGORIA_COLORI.default
 }
 
 function creaIcona(L: any, colore: string) {
   return L.divIcon({
-    html: `<div style="
-      width:12px;height:12px;
-      border-radius:50%;
-      background:${colore};
-      border:2px solid white;
-      box-shadow:0 0 4px rgba(0,0,0,0.5);
-    "></div>`,
+    html: `<div style="width:14px;height:14px;border-radius:50%;background:${colore};border:2px solid white;box-shadow:0 0 6px rgba(0,0,0,0.4);"></div>`,
     className: '',
-    iconSize: [12, 12],
-    iconAnchor: [6, 6],
+    iconSize: [14, 14],
+    iconAnchor: [7, 7],
   })
 }
 
@@ -54,10 +41,9 @@ export default function MappaEventi() {
     const init = async () => {
       try {
         const L = (await import('leaflet')).default
-
         if (!mapRef.current) return
 
-        const map = L.map(mapRef.current).setView([41.5508, 13.0197], 13)
+        const map = L.map(mapRef.current).setView([41.550, 12.983], 13)
         mapInstanceRef.current = map
 
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -67,33 +53,40 @@ export default function MappaEventi() {
 
         const res = await fetch(EVENTI_URL)
         const data = await res.json()
-        const eventi = data.eventi || []
-        setTotale(eventi.length)
+        const events = data.events || []
+        setTotale(events.length)
 
-        eventi.forEach((evento: any) => {
-          const lat = evento.luogo?.coordinate?.lat
-          const lng = evento.luogo?.coordinate?.lng
+        events.forEach((evento: any) => {
+          const payload = evento['___PAYLOAD___']
+          if (!payload) return
+          const lat = payload.luogo?.lat
+          const lng = payload.luogo?.lng
           if (!lat || !lng) return
 
-          const categoria = evento.categoria || ''
+          const nome = payload.nome_evento || ''
+          const categoria = payload.categoria_primaria || ''
+          const periodo = payload.periodo_ricorrenza || ''
+          const venue = payload.venue || ''
+          const ingresso = payload.ingresso || ''
           const colore = getColore(categoria)
           const icona = creaIcona(L, colore)
 
           L.marker([lat, lng], { icon: icona })
             .addTo(map)
             .bindPopup(`
-              <div style="font-family:system-ui;min-width:180px">
-                <div style="font-weight:700;font-size:14px;margin-bottom:4px">${evento.nome}</div>
-                <div style="color:${colore};font-size:12px;margin-bottom:4px">${categoria}</div>
-                <div style="font-size:12px;color:#666">${evento.data_inizio || ''}</div>
-                ${evento.luogo?.nome ? `<div style="font-size:11px;color:#999;margin-top:4px">${evento.luogo.nome}</div>` : ''}
+              <div style="font-family:system-ui;min-width:200px;max-width:260px">
+                <div style="font-weight:700;font-size:14px;margin-bottom:6px;line-height:1.3">${nome}</div>
+                <div style="display:inline-block;background:${colore};color:white;font-size:10px;padding:2px 6px;border-radius:10px;margin-bottom:6px">${categoria.replace(/_/g,' ')}</div>
+                <div style="font-size:12px;color:#555;margin-bottom:2px">📍 ${venue}</div>
+                <div style="font-size:12px;color:#555;margin-bottom:2px">🗓 ${periodo}</div>
+                <div style="font-size:12px;color:#555">🎟 ${ingresso}</div>
               </div>
             `)
         })
 
         setLoading(false)
       } catch (err) {
-        setError('Errore caricamento eventi')
+        setError('Errore caricamento eventi ATLAS•EVENTA™')
         setLoading(false)
       }
     }
@@ -113,37 +106,23 @@ export default function MappaEventi() {
   return (
     <div>
       {!loading && (
-        <div style={{
-          display:'flex', gap:'16px', marginBottom:'12px',
-          fontSize:'13px', color:'#8B7355'
-        }}>
-          <span>🦣 <b style={{color:'#C9A96E'}}>{totale}</b> eventi verificati</span>
-          <span style={{color:'#C9A96E'}}>●</span>
-          <span style={{color:'#C9A96E'}}>Spirituale</span>
-          <span style={{color:'#E67E22'}}>●</span>
-          <span style={{color:'#E67E22'}}>Sagre</span>
-          <span style={{color:'#3498DB'}}>●</span>
-          <span style={{color:'#3498DB'}}>Cultura</span>
-          <span style={{color:'#8B7355'}}>●</span>
-          <span style={{color:'#8B7355'}}>Altro</span>
+        <div style={{display:'flex',gap:'12px',marginBottom:'12px',fontSize:'13px',flexWrap:'wrap'}}>
+          <span>🦣 <b style={{color:'#C9A96E'}}>{totale}</b> eventi certificati KUS-3620</span>
+          {Object.entries(CATEGORIA_COLORI).filter(([k])=>k!=='default').map(([cat, colore]) => (
+            <span key={cat} style={{display:'flex',alignItems:'center',gap:'4px'}}>
+              <span style={{width:'10px',height:'10px',borderRadius:'50%',background:colore,display:'inline-block'}}></span>
+              <span style={{color:'#8B7355',fontSize:'11px'}}>{cat.replace(/_/g,' ')}</span>
+            </span>
+          ))}
         </div>
       )}
-      <div style={{ position: 'relative' }}>
+      <div style={{position:'relative'}}>
         {loading && (
-          <div style={{
-            position:'absolute', inset:0,
-            display:'flex', alignItems:'center', justifyContent:'center',
-            background:'#0A0A0A', zIndex:1000, height:'500px', borderRadius:'8px'
-          }}>
-            <span style={{color:'#C9A96E', fontSize:'14px'}}>
-              🦣 Caricamento eventi ATLAS•EVENTA™...
-            </span>
+          <div style={{position:'absolute',inset:0,display:'flex',alignItems:'center',justifyContent:'center',background:'#0A0A0A',zIndex:1000,height:'500px',borderRadius:'8px'}}>
+            <span style={{color:'#C9A96E',fontSize:'14px'}}>🦣 Caricamento ATLAS•EVENTA™...</span>
           </div>
         )}
-        <div
-          ref={mapRef}
-          style={{ height:'500px', width:'100%', borderRadius:'8px' }}
-        />
+        <div ref={mapRef} style={{height:'500px',width:'100%',borderRadius:'8px'}} />
       </div>
     </div>
   )
