@@ -18,9 +18,15 @@ function getColore(categoria: string): string {
   return CATEGORIA_COLORI[categoria] || CATEGORIA_COLORI.default
 }
 
+function jitter(lat: number, lng: number, index: number): [number, number] {
+  const angle = (index * 137.5 * Math.PI) / 180
+  const radius = 0.0003 + (index % 5) * 0.0001
+  return [lat + Math.cos(angle) * radius, lng + Math.sin(angle) * radius]
+}
+
 function creaIcona(L: any, colore: string) {
   return L.divIcon({
-    html: `<div style="width:14px;height:14px;border-radius:50%;background:${colore};border:2px solid white;box-shadow:0 0 6px rgba(0,0,0,0.4);"></div>`,
+    html: `<div style="width:14px;height:14px;border-radius:50%;background:${colore};border:2px solid white;box-shadow:0 0 6px rgba(0,0,0,0.4);cursor:pointer"></div>`,
     className: '',
     iconSize: [14, 14],
     iconAnchor: [7, 7],
@@ -43,7 +49,7 @@ export default function MappaEventi() {
         const L = (await import('leaflet')).default
         if (!mapRef.current) return
 
-        const map = L.map(mapRef.current).setView([41.550, 12.983], 13)
+        const map = L.map(mapRef.current).setView([41.550, 12.983], 14)
         mapInstanceRef.current = map
 
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -56,12 +62,20 @@ export default function MappaEventi() {
         const events = data.events || []
         setTotale(events.length)
 
-        events.forEach((evento: any) => {
+        const coordCount: Record<string, number> = {}
+
+        events.forEach((evento: any, i: number) => {
           const payload = evento['___PAYLOAD___']
           if (!payload) return
-          const lat = payload.luogo?.lat
-          const lng = payload.luogo?.lng
-          if (!lat || !lng) return
+          const baseLat = payload.luogo?.lat
+          const baseLng = payload.luogo?.lng
+          if (!baseLat || !baseLng) return
+
+          const key = `${baseLat},${baseLng}`
+          coordCount[key] = (coordCount[key] || 0) + 1
+          const idx = coordCount[key] - 1
+
+          const [lat, lng] = idx === 0 ? [baseLat, baseLng] : jitter(baseLat, baseLng, idx)
 
           const nome = payload.nome_evento || ''
           const categoria = payload.categoria_primaria || ''
@@ -76,9 +90,9 @@ export default function MappaEventi() {
             .bindPopup(`
               <div style="font-family:system-ui;min-width:200px;max-width:260px">
                 <div style="font-weight:700;font-size:14px;margin-bottom:6px;line-height:1.3">${nome}</div>
-                <div style="display:inline-block;background:${colore};color:white;font-size:10px;padding:2px 6px;border-radius:10px;margin-bottom:6px">${categoria.replace(/_/g,' ')}</div>
-                <div style="font-size:12px;color:#555;margin-bottom:2px">📍 ${venue}</div>
-                <div style="font-size:12px;color:#555;margin-bottom:2px">🗓 ${periodo}</div>
+                <div style="display:inline-block;background:${colore};color:white;font-size:10px;padding:2px 8px;border-radius:10px;margin-bottom:8px">${categoria.replace(/_/g,' ')}</div>
+                <div style="font-size:12px;color:#555;margin-bottom:3px">📍 ${venue}</div>
+                <div style="font-size:12px;color:#555;margin-bottom:3px">🗓 ${periodo}</div>
                 <div style="font-size:12px;color:#555">🎟 ${ingresso}</div>
               </div>
             `)
@@ -106,7 +120,7 @@ export default function MappaEventi() {
   return (
     <div>
       {!loading && (
-        <div style={{display:'flex',gap:'12px',marginBottom:'12px',fontSize:'13px',flexWrap:'wrap'}}>
+        <div style={{display:'flex',gap:'12px',marginBottom:'12px',fontSize:'13px',flexWrap:'wrap',alignItems:'center'}}>
           <span>🦣 <b style={{color:'#C9A96E'}}>{totale}</b> eventi certificati KUS-3620</span>
           {Object.entries(CATEGORIA_COLORI).filter(([k])=>k!=='default').map(([cat, colore]) => (
             <span key={cat} style={{display:'flex',alignItems:'center',gap:'4px'}}>
