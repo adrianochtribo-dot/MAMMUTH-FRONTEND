@@ -12,6 +12,9 @@ const CATEGORIA_COLORI: Record<string, string> = {
   'FESTIVAL_ARTE': '#3498DB',
   'RIEVOCAZIONE_STORICA': '#E74C3C',
   'FIERA': '#2ECC71',
+  'CULTURA': '#1ABC9C',
+  'MUSICA': '#9B59B6',
+  'ENOGASTRONOMIA': '#E67E22',
   'default': '#8B7355',
 }
 
@@ -59,7 +62,7 @@ export default function MappaEventi() {
         }).addTo(map)
 
         const res = await fetch(
-          `${SUPABASE_URL}/rest/v1/eventi?select=id,titolo,categoria,luogo,indirizzo,data_inizio,data_fine,gratuito,prezzo_min,descrizione,geom`,
+          `${SUPABASE_URL}/rest/v1/eventi_view?select=id,titolo,categoria,luogo,indirizzo,data_inizio,data_fine,gratuito,prezzo_min,descrizione,lat,lng`,
           {
             headers: {
               apikey: SUPABASE_KEY,
@@ -68,19 +71,18 @@ export default function MappaEventi() {
           }
         )
 
-        if (!res.ok) throw new Error('Errore fetch Supabase')
+        if (!res.ok) throw new Error(`Errore fetch: ${res.status}`)
         const events = await res.json()
         setTotale(events.length)
 
         const coordCount: Record<string, number> = {}
 
         events.forEach((evento: any) => {
-          if (!evento.geom) return
-          let lat: number, lng: number
-          if (evento.geom.type === 'Point') {
-            lng = evento.geom.coordinates[0]
-            lat = evento.geom.coordinates[1]
-          } else return
+          if (!evento.lat || !evento.lng) return
+
+          const lat = parseFloat(evento.lat)
+          const lng = parseFloat(evento.lng)
+          if (isNaN(lat) || isNaN(lng)) return
 
           const key = `${lat},${lng}`
           coordCount[key] = (coordCount[key] || 0) + 1
@@ -108,8 +110,8 @@ export default function MappaEventi() {
         })
 
         setLoading(false)
-      } catch (err) {
-        setError('Errore caricamento eventi ATLAS•EVENTA™')
+      } catch (err: any) {
+        setError(`Errore: ${err.message}`)
         setLoading(false)
       }
     }
