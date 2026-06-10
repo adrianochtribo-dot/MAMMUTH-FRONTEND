@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from 'react'
 
 const SUPABASE_URL = 'https://pwfsuefyiiwnltikcdho.supabase.co'
-const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InB3ZnN1ZWZ5aWl3bmx0aWtjZGhvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDY4MDI5MjcsImV4cCI6MjA2MjM3ODkyN30.xZ1cpuB2RFgKIDtBDtBmKB8fHce_Fio1XOlfCVWjqkA'
+const SUPABASE_KEY = 'sb_publishable_5sHvYKX3YL7RI_RwpJK9FQ_-A2G7H63'
 
 const CATEGORIA_COLORI: Record<string, string> = {
   'FESTA_RELIGIOSA': '#C9A96E',
