@@ -62,7 +62,7 @@ export default function MappaEventi() {
         }).addTo(map)
 
         const res = await fetch(
-          `${SUPABASE_URL}/rest/v1/eventi_view?select=id,titolo,categoria,luogo,indirizzo,data_inizio,data_fine,gratuito,prezzo_min,descrizione,lat,lng`,
+          `${SUPABASE_URL}/rest/v1/eventi?select=id,titolo,categoria,luogo,indirizzo,data_inizio,data_fine,gratuito,prezzo_min,descrizione,lat,lng`,
           {
             headers: {
               apikey: SUPABASE_KEY,
