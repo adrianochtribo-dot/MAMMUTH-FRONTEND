@@ -30,19 +30,33 @@ function jitter(lat: number, lng: number, index: number): [number, number] {
 
 const categorie = ['TUTTE', ...Object.keys(CATEGORIA_COLORI).filter(k => k !== 'default')]
 
+interface Evento {
+  id: number
+  titolo: string
+  categoria: string
+  luogo: string
+  data_inizio: string
+  gratuito: boolean
+  prezzo_min: number | null
+  descrizione: string
+  lat: number
+  lng: number
+}
+
 export default function MappaEventi() {
   const mapRef = useRef<HTMLDivElement>(null)
   const mapInstanceRef = useRef<any>(null)
   const leafletRef = useRef<any>(null)
   const markersRef = useRef<any[]>([])
   const [loading, setLoading] = useState(true)
-  const [eventi, setEventi] = useState<any[]>([])
+  const [eventi, setEventi] = useState<Evento[]>([])
   const [error, setError] = useState<string | null>(null)
   const [filtroCategoria, setFiltroCategoria] = useState<string>('TUTTE')
   const [filtroGratuito, setFiltroGratuito] = useState<boolean>(false)
   const [filtroTesto, setFiltroTesto] = useState<string>('')
+  const [eventoSelezionato, setEventoSelezionato] = useState<Evento | null>(null)
 
-  const aggiornaMarker = useCallback((eventiDaFiltrare: any[]) => {
+  const aggiornaMarker = useCallback((eventiDaFiltrare: Evento[]) => {
     const L = leafletRef.current
     const map = mapInstanceRef.current
     if (!L || !map) return
@@ -59,10 +73,10 @@ export default function MappaEventi() {
 
     const coordCount: Record<string, number> = {}
 
-    eventiFiltrati.forEach((evento: any) => {
+    eventiFiltrati.forEach((evento: Evento) => {
       if (!evento.lat || !evento.lng) return
-      const lat = parseFloat(evento.lat)
-      const lng = parseFloat(evento.lng)
+      const lat = parseFloat(String(evento.lat))
+      const lng = parseFloat(String(evento.lng))
       if (isNaN(lat) || isNaN(lng)) return
 
       const key = `${lat},${lng}`
@@ -72,28 +86,17 @@ export default function MappaEventi() {
 
       const colore = getColore(evento.categoria)
       const icona = L.divIcon({
-        html: `<div style="width:14px;height:14px;border-radius:50%;background:${colore};border:2px solid white;box-shadow:0 0 6px rgba(0,0,0,0.4);cursor:pointer"></div>`,
+        html: `<div style="width:16px;height:16px;border-radius:50%;background:${colore};border:2px solid white;box-shadow:0 0 8px rgba(0,0,0,0.3);cursor:pointer;transition:transform 0.2s"></div>`,
         className: '',
-        iconSize: [14, 14],
-        iconAnchor: [7, 7],
+        iconSize: [16, 16],
+        iconAnchor: [8, 8],
       })
-      const ingresso = evento.gratuito ? 'GRATUITO' : evento.prezzo_min ? `Da €${evento.prezzo_min}` : 'Vedi dettagli'
-      const dataInizio = evento.data_inizio
-        ? new Date(evento.data_inizio).toLocaleDateString('it-IT', { day: 'numeric', month: 'long', year: 'numeric' })
-        : ''
 
       const marker = L.marker([jLat, jLng], { icon: icona })
         .addTo(map)
-        .bindPopup(`
-          <div style="font-family:system-ui;min-width:200px;max-width:260px">
-            <div style="font-weight:700;font-size:14px;margin-bottom:6px;line-height:1.3">${evento.titolo}</div>
-            <div style="display:inline-block;background:${colore};color:white;font-size:10px;padding:2px 8px;border-radius:10px;margin-bottom:8px">${(evento.categoria || '').replace(/_/g,' ')}</div>
-            <div style="font-size:12px;color:#555;margin-bottom:3px">📍 ${evento.luogo || ''}</div>
-            <div style="font-size:12px;color:#555;margin-bottom:3px">🗓 ${dataInizio}</div>
-            <div style="font-size:12px;color:#555;margin-bottom:8px">🎟 ${ingresso}</div>
-            <a href="/evento/${evento.id}" style="display:block;text-align:center;background:#8B7CF6;color:white;font-size:12px;font-weight:600;padding:6px 12px;border-radius:8px;text-decoration:none">Scopri di più →</a>
-          </div>
-        `)
+        .on('click', () => {
+          setEventoSelezionato(evento)
+        })
 
       markersRef.current.push(marker)
     })
@@ -118,7 +121,7 @@ export default function MappaEventi() {
         }).addTo(map)
 
         const res = await fetch(
-          `${SUPABASE_URL}/rest/v1/eventi?select=id,titolo,categoria,luogo,indirizzo,data_inizio,data_fine,gratuito,prezzo_min,descrizione,lat,lng`,
+          `${SUPABASE_URL}/rest/v1/eventi?select=id,titolo,categoria,luogo,data_inizio,gratuito,prezzo_min,descrizione,lat,lng`,
           {
             headers: {
               apikey: SUPABASE_KEY,
@@ -162,8 +165,16 @@ export default function MappaEventi() {
     return true
   })
 
+  const coloreSelezionato = eventoSelezionato ? getColore(eventoSelezionato.categoria) : '#8B7CF6'
+  const dataFormattata = eventoSelezionato?.data_inizio
+    ? new Date(eventoSelezionato.data_inizio).toLocaleDateString('it-IT', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })
+    : ''
+  const ingresso = eventoSelezionato?.gratuito ? 'GRATUITO' : eventoSelezionato?.prezzo_min ? `Da €${eventoSelezionato.prezzo_min}` : 'Vedi dettagli'
+
   return (
-    <div>
+    <div style={{position:'relative'}}>
+
+      {/* FILTRI */}
       <div style={{marginBottom:'16px',display:'flex',flexDirection:'column',gap:'12px'}}>
         <input
           type="text"
@@ -195,6 +206,7 @@ export default function MappaEventi() {
         </div>
       </div>
 
+      {/* MAPPA */}
       <div style={{position:'relative'}}>
         {loading && (
           <div style={{position:'absolute',inset:0,display:'flex',alignItems:'center',justifyContent:'center',background:'#F5F5F7',zIndex:1000,height:'500px',borderRadius:'8px'}}>
@@ -203,6 +215,87 @@ export default function MappaEventi() {
         )}
         <div ref={mapRef} style={{height:'500px',width:'100%',borderRadius:'8px'}} />
       </div>
+
+      {/* MAMMUTH•KeySLIDE™ */}
+      {eventoSelezionato && (
+        <>
+          {/* OVERLAY */}
+          <div
+            onClick={() => setEventoSelezionato(null)}
+            style={{position:'fixed',inset:0,background:'rgba(0,0,0,0.3)',zIndex:1000,backdropFilter:'blur(2px)'}}
+          />
+
+          {/* PANEL */}
+          <div style={{
+            position:'fixed',
+            bottom:0,
+            left:0,
+            right:0,
+            zIndex:1001,
+            background:'white',
+            borderRadius:'20px 20px 0 0',
+            padding:'0 24px 40px',
+            boxShadow:'0 -4px 40px rgba(0,0,0,0.15)',
+            animation:'slideUp 0.3s cubic-bezier(0.32,0.72,0,1)',
+            maxHeight:'85vh',
+            overflowY:'auto',
+          }}>
+
+            {/* HANDLE */}
+            <div style={{display:'flex',justifyContent:'center',paddingTop:'12px',paddingBottom:'16px'}}>
+              <div style={{width:'36px',height:'4px',borderRadius:'2px',background:'rgba(0,0,0,0.15)'}}></div>
+            </div>
+
+            {/* CATEGORIA */}
+            <div style={{display:'inline-block',background:coloreSelezionato,color:'white',fontSize:'11px',padding:'4px 12px',borderRadius:'20px',marginBottom:'12px',fontWeight:600,letterSpacing:'0.05em'}}>
+              {(eventoSelezionato.categoria || '').replace(/_/g,' ')}
+            </div>
+
+            {/* TITOLO */}
+            <h2 style={{fontSize:'22px',fontWeight:700,lineHeight:1.2,marginBottom:'12px',color:'#1D1D1F',margin:'0 0 12px 0'}}>
+              {eventoSelezionato.titolo}
+            </h2>
+
+            {/* META */}
+            <div style={{display:'flex',flexDirection:'column',gap:'8px',marginBottom:'20px'}}>
+              <div style={{fontSize:'14px',color:'rgba(29,29,31,0.6)'}}>📍 {eventoSelezionato.luogo || 'Sermoneta'}</div>
+              <div style={{fontSize:'14px',color:'rgba(29,29,31,0.6)'}}>🗓 {dataFormattata}</div>
+              <div style={{fontSize:'14px',fontWeight:600,color:coloreSelezionato}}>🎟 {ingresso}</div>
+            </div>
+
+            {/* DESCRIZIONE */}
+            {eventoSelezionato.descrizione && (
+              <p style={{fontSize:'14px',lineHeight:1.6,color:'rgba(29,29,31,0.7)',marginBottom:'24px'}}>
+                {eventoSelezionato.descrizione}
+              </p>
+            )}
+
+            {/* BOTTONI */}
+            <div style={{display:'flex',gap:'12px'}}>
+              <a href={`/evento/${eventoSelezionato.id}`}
+                style={{flex:1,display:'block',textAlign:'center',background:'#8B7CF6',color:'white',fontSize:'14px',fontWeight:600,padding:'14px',borderRadius:'14px',textDecoration:'none'}}>
+                Scopri di più →
+              </a>
+              <button onClick={() => setEventoSelezionato(null)}
+                style={{padding:'14px 20px',borderRadius:'14px',border:'none',background:'rgba(0,0,0,0.06)',cursor:'pointer',fontSize:'14px',color:'rgba(29,29,31,0.6)'}}>
+                ✕
+              </button>
+            </div>
+
+            {/* LABEL */}
+            <div style={{textAlign:'center',marginTop:'16px',fontSize:'10px',color:'rgba(29,29,31,0.3)',letterSpacing:'0.1em'}}>
+              MAMMUTH•KeySLIDE™
+            </div>
+          </div>
+
+          <style>{`
+            @keyframes slideUp {
+              from { transform: translateY(100%); }
+              to { transform: translateY(0); }
+            }
+          `}</style>
+        </>
+      )}
     </div>
   )
 }
