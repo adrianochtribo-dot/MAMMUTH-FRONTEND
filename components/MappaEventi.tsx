@@ -55,6 +55,7 @@ export default function MappaEventi() {
   const [filtroGratuito, setFiltroGratuito] = useState<boolean>(false)
   const [filtroTesto, setFiltroTesto] = useState<string>('')
   const [eventoSelezionato, setEventoSelezionato] = useState<Evento | null>(null)
+  const [mapReady, setMapReady] = useState(false)
 
   const aggiornaMarker = useCallback((eventiDaFiltrare: Evento[]) => {
     const L = leafletRef.current
@@ -71,8 +72,8 @@ export default function MappaEventi() {
       return true
     })
 
-    const coordCount: Record<string, number> = {}
     const bounds: [number, number][] = []
+    const coordCount: Record<string, number> = {}
 
     eventiFiltrati.forEach((evento: Evento) => {
       if (!evento.lat || !evento.lng) return
@@ -89,7 +90,7 @@ export default function MappaEventi() {
 
       const colore = getColore(evento.categoria)
       const icona = L.divIcon({
-        html: `<div style="width:18px;height:18px;border-radius:50%;background:${colore};border:2px solid white;box-shadow:0 2px 8px rgba(0,0,0,0.3);cursor:pointer;transition:transform 0.2s"></div>`,
+        html: `<div style="width:18px;height:18px;border-radius:50%;background:${colore};border:2px solid white;box-shadow:0 2px 8px rgba(0,0,0,0.3);cursor:pointer"></div>`,
         className: '',
         iconSize: [18, 18],
         iconAnchor: [9, 9],
@@ -97,22 +98,18 @@ export default function MappaEventi() {
 
       const marker = L.marker([jLat, jLng], { icon: icona })
         .addTo(map)
-        .on('click', () => {
-          setEventoSelezionato(evento)
-        })
+        .on('click', () => setEventoSelezionato(evento))
 
       markersRef.current.push(marker)
     })
 
-    // Auto-fit sulla mappa quando ci sono risultati filtrati
     if (bounds.length > 0) {
       if (bounds.length === 1) {
-        map.setView(bounds[0], 14)
+        map.setView(bounds[0], 15)
       } else {
-        map.fitBounds(bounds, { padding: [40, 40], maxZoom: 14 })
+        try { map.fitBounds(bounds, { padding: [40, 40], maxZoom: 14 }) } catch(e) {}
       }
-    } else if (filtroTesto || filtroCategoria !== 'TUTTE') {
-      // Nessun risultato — torna su Sermoneta
+    } else {
       map.setView([41.550, 12.983], 13)
     }
   }, [filtroCategoria, filtroGratuito, filtroTesto])
@@ -120,15 +117,27 @@ export default function MappaEventi() {
   useEffect(() => {
     if (typeof window === 'undefined') return
     if (mapInstanceRef.current) return
+    if (!mapRef.current) return
 
     const init = async () => {
       try {
         const L = (await import('leaflet')).default
+        await import('leaflet/dist/leaflet.css')
         leafletRef.current = L
-        if (!mapRef.current) return
 
-        // Zoom su Sermoneta al livello giusto per vedere i PIN
-        const map = L.map(mapRef.current).setView([41.550, 12.983], 13)
+        // Fix icone default Leaflet
+        delete (L.Icon.Default.prototype as any)._getIconUrl
+        L.Icon.Default.mergeOptions({
+          iconRetinaUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png',
+          iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
+          shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
+        })
+
+        const map = L.map(mapRef.current!, {
+          center: [41.550, 12.983],
+          zoom: 13,
+          zoomControl: true,
+        })
         mapInstanceRef.current = map
 
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -136,8 +145,10 @@ export default function MappaEventi() {
           maxZoom: 19,
         }).addTo(map)
 
+        setMapReady(true)
+
         const res = await fetch(
-          `${SUPABASE_URL}/rest/v1/eventi?select=id,titolo,categoria,luogo,data_inizio,gratuito,prezzo_min,descrizione,lat,lng`,
+          `${SUPABASE_URL}/rest/v1/eventi?select=id,titolo,categoria,luogo,data_inizio,gratuito,prezzo_min,descrizione,lat,lng&order=data_inizio.asc`,
           {
             headers: {
               apikey: SUPABASE_KEY,
@@ -167,10 +178,10 @@ export default function MappaEventi() {
   }, [])
 
   useEffect(() => {
-    if (eventi.length > 0 && leafletRef.current) {
+    if (eventi.length > 0 && mapReady) {
       aggiornaMarker(eventi)
     }
-  }, [eventi, aggiornaMarker])
+  }, [eventi, aggiornaMarker, mapReady])
 
   if (error) return <div style={{color:'#E74C3C',padding:'16px'}}>{error}</div>
 
@@ -217,29 +228,36 @@ export default function MappaEventi() {
             🎟 Solo gratuiti
           </button>
           <span style={{fontSize:'12px',color:'rgba(29,29,31,0.4)'}}>
-            {loading ? '...' : `${eventiFiltrati.length} eventi`}
+            {loading ? '⏳' : `${eventiFiltrati.length} eventi`}
           </span>
         </div>
       </div>
 
-      {/* LISTA EVENTI FILTRATI — appare quando cerchi */}
+      {/* LISTA RISULTATI — appare quando si cerca */}
       {(filtroTesto || filtroCategoria !== 'TUTTE') && eventiFiltrati.length > 0 && (
-        <div style={{marginBottom:'16px',display:'flex',flexDirection:'column',gap:'8px',maxHeight:'200px',overflowY:'auto'}}>
+        <div style={{marginBottom:'16px',display:'flex',flexDirection:'column',gap:'6px',maxHeight:'220px',overflowY:'auto',borderRadius:'12px',border:'1px solid rgba(0,0,0,0.08)',background:'white',padding:'8px'}}>
           {eventiFiltrati.map(ev => (
             <div key={ev.id}
               onClick={() => setEventoSelezionato(ev)}
-              style={{padding:'10px 14px',borderRadius:'12px',background:'white',border:'1px solid rgba(0,0,0,0.08)',cursor:'pointer',display:'flex',alignItems:'center',gap:'10px',transition:'box-shadow 0.2s'}}
-              onMouseEnter={e => (e.currentTarget.style.boxShadow='0 2px 12px rgba(0,0,0,0.1)')}
-              onMouseLeave={e => (e.currentTarget.style.boxShadow='none')}
+              style={{padding:'10px 12px',borderRadius:'10px',cursor:'pointer',display:'flex',alignItems:'center',gap:'10px',transition:'background 0.15s'}}
+              onMouseEnter={e => (e.currentTarget.style.background='rgba(0,0,0,0.04)')}
+              onMouseLeave={e => (e.currentTarget.style.background='transparent')}
             >
               <div style={{width:'10px',height:'10px',borderRadius:'50%',background:getColore(ev.categoria),flexShrink:0}} />
               <div style={{flex:1,minWidth:0}}>
                 <div style={{fontSize:'13px',fontWeight:600,color:'#1D1D1F',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{ev.titolo}</div>
                 <div style={{fontSize:'11px',color:'rgba(29,29,31,0.5)'}}>{ev.luogo}</div>
               </div>
-              <div style={{fontSize:'10px',color:'rgba(29,29,31,0.4)',flexShrink:0}}>{ev.categoria?.replace(/_/g,' ')}</div>
+              <span style={{fontSize:'10px',color:'rgba(29,29,31,0.35)',flexShrink:0}}>{ev.categoria?.replace(/_/g,' ')}</span>
             </div>
           ))}
+        </div>
+      )}
+
+      {/* NESSUN RISULTATO */}
+      {(filtroTesto || filtroCategoria !== 'TUTTE') && eventiFiltrati.length === 0 && !loading && (
+        <div style={{marginBottom:'16px',padding:'16px',borderRadius:'12px',background:'white',border:'1px solid rgba(0,0,0,0.08)',textAlign:'center',fontSize:'13px',color:'rgba(29,29,31,0.4)'}}>
+          Nessun evento trovato per questa ricerca
         </div>
       )}
 
@@ -256,10 +274,8 @@ export default function MappaEventi() {
       {/* MAMMUTH•KeySLIDE™ */}
       {eventoSelezionato && (
         <>
-          <div
-            onClick={() => setEventoSelezionato(null)}
-            style={{position:'fixed',inset:0,background:'rgba(0,0,0,0.3)',zIndex:1000,backdropFilter:'blur(2px)'}}
-          />
+          <div onClick={() => setEventoSelezionato(null)}
+            style={{position:'fixed',inset:0,background:'rgba(0,0,0,0.3)',zIndex:1000,backdropFilter:'blur(2px)'}} />
           <div style={{
             position:'fixed',bottom:0,left:0,right:0,zIndex:1001,
             background:'white',borderRadius:'20px 20px 0 0',
