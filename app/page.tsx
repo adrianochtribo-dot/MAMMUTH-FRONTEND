@@ -24,39 +24,42 @@ export default function Home() {
           style={{ backgroundImage: "url('/7144155905_03751fa6fa_b.jpg')" }}
         />
         <div className="absolute inset-0" style={{background:'linear-gradient(to bottom, rgba(245,245,247,0.3), rgba(245,245,247,0.95))'}} />
-        <div className="relative z-10 max-w-4xl mx-auto">
+        <div className="relative z-10 max-w-4xl mx-auto w-full">
           <span className="text-xs font-medium tracking-widest uppercase mb-6 block" style={{color:'#FBBF24'}}>
             Territorio Pilota — Sermoneta, Provincia di Latina
           </span>
 
-          {/* TITOLO: testo con gradiente + TM in colore solido separato */}
-          <div style={{lineHeight:1.1, paddingBottom:'0.2em'}}>
-            <span
-              className="font-semibold tracking-tighter"
-              style={{
-                fontSize:'clamp(2.5rem, 10vw, 6rem)',
-                background:'linear-gradient(135deg, #8B7CF6 0%, #E879A0 35%, #38BDF8 70%, #34D399 100%)',
-                WebkitBackgroundClip:'text',
-                WebkitTextFillColor:'transparent',
-                backgroundClip:'text',
-              }}>
-              MAMMUTH•EVENTS
-            </span>
-            <span
-              className="font-semibold"
-              style={{
-                fontSize:'clamp(1rem, 3.5vw, 2.2rem)',
-                verticalAlign:'super',
-                color:'#34D399',
-                WebkitTextFillColor:'#34D399',
-                lineHeight:1,
-                marginLeft:'0.05em',
-              }}>
-              ™
-            </span>
+          {/* TITOLO SVG — gradiente nativo, nessun clipping */}
+          <div className="w-full flex justify-center mb-0" style={{lineHeight:1}}>
+            <svg
+              viewBox="0 0 900 120"
+              xmlns="http://www.w3.org/2000/svg"
+              style={{width:'100%',maxWidth:'900px',height:'auto',overflow:'visible'}}
+            >
+              <defs>
+                <linearGradient id="grad" x1="0%" y1="0%" x2="100%" y2="0%">
+                  <stop offset="0%"   stopColor="#8B7CF6" />
+                  <stop offset="35%"  stopColor="#E879A0" />
+                  <stop offset="70%"  stopColor="#38BDF8" />
+                  <stop offset="100%" stopColor="#34D399" />
+                </linearGradient>
+              </defs>
+              <text
+                x="50%"
+                y="95"
+                textAnchor="middle"
+                fill="url(#grad)"
+                fontFamily="-apple-system, BlinkMacSystemFont, 'SF Pro Display', sans-serif"
+                fontWeight="600"
+                fontSize="96"
+                letterSpacing="-3"
+              >
+                MAMMUTH•EVENTS™
+              </text>
+            </svg>
           </div>
 
-          <p className="mt-6 text-xl md:text-2xl font-light max-w-2xl mx-auto leading-relaxed" style={{color:'rgba(29,29,31,0.6)'}}>
+          <p className="mt-4 text-xl md:text-2xl font-light max-w-2xl mx-auto leading-relaxed" style={{color:'rgba(29,29,31,0.6)'}}>
             Where Communities Come Alive™
           </p>
           <p className="mt-3 text-base max-w-xl mx-auto" style={{color:'rgba(29,29,31,0.4)'}}>
