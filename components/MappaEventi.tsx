@@ -104,7 +104,8 @@ export default function MappaEventi() {
                 <div style="display:inline-block;background:${colore};color:white;font-size:10px;padding:2px 8px;border-radius:10px;margin-bottom:8px">${(evento.categoria || '').replace(/_/g,' ')}</div>
                 <div style="font-size:12px;color:#555;margin-bottom:3px">📍 ${evento.luogo || ''}</div>
                 <div style="font-size:12px;color:#555;margin-bottom:3px">🗓 ${dataInizio}</div>
-                <div style="font-size:12px;color:#555">🎟 ${ingresso}</div>
+                <div style="font-size:12px;color:#555;margin-bottom:8px">🎟 ${ingresso}</div>
+                <a href="/evento/${evento.id}" style="display:block;text-align:center;background:#8B7CF6;color:white;font-size:12px;font-weight:600;padding:6px 12px;border-radius:8px;text-decoration:none">Scopri di più →</a>
               </div>
             `)
         })
