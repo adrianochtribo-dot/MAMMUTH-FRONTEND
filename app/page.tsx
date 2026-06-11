@@ -28,17 +28,28 @@ export default function Home() {
           <span className="text-xs font-medium tracking-widest uppercase mb-6 block" style={{color:'#FBBF24'}}>
             Territorio Pilota — Sermoneta, Provincia di Latina
           </span>
-          <h1
-            className="text-5xl md:text-8xl font-semibold tracking-tighter leading-none pb-3"
+
+          {/* TITOLO con TM fix — niente WebkitTextFillColor sul superscript */}
+          <div
+            className="font-semibold tracking-tighter"
             style={{
+              fontSize:'clamp(2.5rem, 10vw, 6rem)',
+              lineHeight: 1.1,
               background:'linear-gradient(135deg, #8B7CF6 0%, #E879A0 35%, #38BDF8 70%, #34D399 100%)',
               WebkitBackgroundClip:'text',
               WebkitTextFillColor:'transparent',
               backgroundClip:'text',
-              display:'inline-block',
+              paddingBottom:'0.15em',
             }}>
-            MAMMUTH•EVENTS™
-          </h1>
+            MAMMUTH•EVENTS
+            <span style={{
+              fontSize:'0.45em',
+              verticalAlign:'super',
+              WebkitTextFillColor:'transparent',
+              lineHeight:1,
+            }}>™</span>
+          </div>
+
           <p className="mt-6 text-xl md:text-2xl font-light max-w-2xl mx-auto leading-relaxed" style={{color:'rgba(29,29,31,0.6)'}}>
             Where Communities Come Alive™
           </p>
