@@ -28,8 +28,15 @@ export default function Home() {
           <span className="text-xs font-medium tracking-widest uppercase mb-6 block" style={{color:'#FBBF24'}}>
             Territorio Pilota — Sermoneta, Provincia di Latina
           </span>
-          <h1 className="text-5xl md:text-8xl font-semibold tracking-tighter leading-tight"
-            style={{background:'linear-gradient(135deg, #8B7CF6 0%, #E879A0 35%, #38BDF8 70%, #34D399 100%)',WebkitBackgroundClip:'text',WebkitTextFillColor:'transparent'}}>
+          <h1
+            className="text-5xl md:text-8xl font-semibold tracking-tighter leading-none pb-3"
+            style={{
+              background:'linear-gradient(135deg, #8B7CF6 0%, #E879A0 35%, #38BDF8 70%, #34D399 100%)',
+              WebkitBackgroundClip:'text',
+              WebkitTextFillColor:'transparent',
+              backgroundClip:'text',
+              display:'inline-block',
+            }}>
             MAMMUTH•EVENTS™
           </h1>
           <p className="mt-6 text-xl md:text-2xl font-light max-w-2xl mx-auto leading-relaxed" style={{color:'rgba(29,29,31,0.6)'}}>
@@ -38,12 +45,23 @@ export default function Home() {
           <p className="mt-3 text-base max-w-xl mx-auto" style={{color:'rgba(29,29,31,0.4)'}}>
             Il primo sistema di scoperta eventi iperlocale con architettura certificata KUS-3620.
           </p>
-          <div className="mt-10 flex items-center justify-center gap-8 text-base">
+          <div className="mt-10 flex flex-wrap items-center justify-center gap-4 text-base">
             <a href="#mappa" style={{color:'#8B7CF6'}} className="hover:underline flex items-center gap-1">
               Esplora la mappa →
             </a>
             <a href="https://mammuth-ev-production.up.railway.app/docs" target="_blank" style={{color:'#38BDF8'}} className="hover:underline flex items-center gap-1">
               Safety Engine API →
+            </a>
+            <a
+              href="https://adrianochtribo-dot.github.io/MAMMUTH-EV/developer/pitch.html"
+              target="_blank"
+              className="flex items-center gap-2 px-5 py-2 rounded-full text-sm font-medium transition-opacity hover:opacity-80"
+              style={{
+                background:'linear-gradient(135deg, #8B7CF6, #E879A0)',
+                color:'#fff',
+                textDecoration:'none',
+              }}>
+              📊 Pitch Deck →
             </a>
           </div>
         </div>
