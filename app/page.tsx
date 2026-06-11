@@ -29,7 +29,6 @@ export default function Home() {
             Territorio Pilota — Sermoneta, Provincia di Latina
           </span>
 
-          {/* TITOLO SVG — gradiente nativo, nessun clipping */}
           <div className="w-full flex justify-center mb-0" style={{lineHeight:1}}>
             <svg
               viewBox="0 0 900 120"
@@ -122,9 +121,9 @@ export default function Home() {
 
       {/* FOOTER */}
       <footer className="border-t py-12 text-center text-xs" style={{borderColor:'rgba(0,0,0,0.08)',color:'rgba(29,29,31,0.4)'}}>
-        <p className="mb-2">MAMMUTH•EVENTS™ — KREATIO UNIVERSAL SYSTEM™ Code 3620</p>
+        <p className="mb-2">MAMMUTH™ — KREATIO UNIVERSAL SYSTEM™ Code 3620</p>
         <p className="mb-2">Photo: ©2012 LeonardoAdrianoChelariu — Sermoneta (Latina)</p>
-        <p style={{color:'rgba(29,29,31,0.25)'}}>MAMMUTH™ is a trademark of Leonardo Adriano Chelariu. All rights reserved.</p>
+        <p style={{color:'rgba(29,29,31,0.25)'}}>MAMMUTH™ · MAMMUTH•EVENTS™ are trademarks of Leonardo Adriano Chelariu. All rights reserved.</p>
       </footer>
 
     </div>
