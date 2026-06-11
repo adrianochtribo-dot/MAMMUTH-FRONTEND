@@ -12,7 +12,7 @@ export default function Home() {
           <div className="flex gap-6 text-xs" style={{color:'rgba(29,29,31,0.6)'}}>
             <Link href="#mappa" className="hover:opacity-100 transition" style={{color:'inherit'}}>Mappa</Link>
             <Link href="#architettura" className="hover:opacity-100 transition" style={{color:'inherit'}}>Architettura</Link>
-            <a href="https://adrianochtribo-dot.github.io/MAMMUTH-EV/developer/" target="_blank" className="hover:opacity-100 transition" style={{color:'inherit'}}>Developer Portal</a>
+            <a href="https://adrianochtribo-dot.github.io/MAMMUTH-EV/developer/developer-index.html" target="_blank" className="hover:opacity-100 transition" style={{color:'inherit'}}>Developer Portal</a>
           </div>
         </div>
       </nav>
