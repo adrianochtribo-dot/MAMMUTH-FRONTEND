@@ -55,7 +55,7 @@ export default function Home() {
           Eventi nel territorio
         </h2>
         <p className="text-sm mb-8" style={{color:'rgba(29,29,31,0.5)'}}>
-          23 eventi certificati ATLAS•EVENTA™ — verità territoriale, zero dati inventati.
+          34 eventi certificati ATLAS•EVENTA™ — verità territoriale, zero dati inventati.
         </p>
         <MappaEventi />
       </section>
@@ -68,7 +68,7 @@ export default function Home() {
           {[
             { label: 'Safety Engine', value: 'v1.0.0', desc: 'Fruin LoS + Cosine Similarity storica', accent: '#8B7CF6' },
             { label: 'Risk Score', value: '0.0–1.0', desc: 'Calcolo predittivo crowd crush', accent: '#E879A0' },
-            { label: 'Dataset', value: '23 eventi', desc: 'KUS-3620 certified — TCF 100%', accent: '#38BDF8' },
+            { label: 'Dataset', value: '34 eventi', desc: 'KUS-3620 certified — TCF 100%', accent: '#38BDF8' },
             { label: 'Stack', value: 'Next.js 14', desc: 'Vercel Edge CDN + Railway FastAPI', accent: '#34D399' },
             { label: 'Database', value: 'Supabase', desc: 'PostgreSQL + PostGIS ready', accent: '#FBBF24' },
             { label: 'Pipeline', value: 'ATLAS•EVENTA™', desc: 'WhatsApp → Claude → JSON certificato', accent: '#8B7CF6' },
