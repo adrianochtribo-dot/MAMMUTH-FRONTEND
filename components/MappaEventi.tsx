@@ -72,6 +72,7 @@ export default function MappaEventi() {
     })
 
     const coordCount: Record<string, number> = {}
+    const bounds: [number, number][] = []
 
     eventiFiltrati.forEach((evento: Evento) => {
       if (!evento.lat || !evento.lng) return
@@ -84,12 +85,14 @@ export default function MappaEventi() {
       const idx = coordCount[key] - 1
       const [jLat, jLng] = idx === 0 ? [lat, lng] : jitter(lat, lng, idx)
 
+      bounds.push([jLat, jLng])
+
       const colore = getColore(evento.categoria)
       const icona = L.divIcon({
-        html: `<div style="width:16px;height:16px;border-radius:50%;background:${colore};border:2px solid white;box-shadow:0 0 8px rgba(0,0,0,0.3);cursor:pointer;transition:transform 0.2s"></div>`,
+        html: `<div style="width:18px;height:18px;border-radius:50%;background:${colore};border:2px solid white;box-shadow:0 2px 8px rgba(0,0,0,0.3);cursor:pointer;transition:transform 0.2s"></div>`,
         className: '',
-        iconSize: [16, 16],
-        iconAnchor: [8, 8],
+        iconSize: [18, 18],
+        iconAnchor: [9, 9],
       })
 
       const marker = L.marker([jLat, jLng], { icon: icona })
@@ -100,6 +103,18 @@ export default function MappaEventi() {
 
       markersRef.current.push(marker)
     })
+
+    // Auto-fit sulla mappa quando ci sono risultati filtrati
+    if (bounds.length > 0) {
+      if (bounds.length === 1) {
+        map.setView(bounds[0], 14)
+      } else {
+        map.fitBounds(bounds, { padding: [40, 40], maxZoom: 14 })
+      }
+    } else if (filtroTesto || filtroCategoria !== 'TUTTE') {
+      // Nessun risultato — torna su Sermoneta
+      map.setView([41.550, 12.983], 13)
+    }
   }, [filtroCategoria, filtroGratuito, filtroTesto])
 
   useEffect(() => {
@@ -112,7 +127,8 @@ export default function MappaEventi() {
         leafletRef.current = L
         if (!mapRef.current) return
 
-        const map = L.map(mapRef.current).setView([41.550, 12.983], 14)
+        // Zoom su Sermoneta al livello giusto per vedere i PIN
+        const map = L.map(mapRef.current).setView([41.550, 12.983], 13)
         mapInstanceRef.current = map
 
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -206,6 +222,27 @@ export default function MappaEventi() {
         </div>
       </div>
 
+      {/* LISTA EVENTI FILTRATI — appare quando cerchi */}
+      {(filtroTesto || filtroCategoria !== 'TUTTE') && eventiFiltrati.length > 0 && (
+        <div style={{marginBottom:'16px',display:'flex',flexDirection:'column',gap:'8px',maxHeight:'200px',overflowY:'auto'}}>
+          {eventiFiltrati.map(ev => (
+            <div key={ev.id}
+              onClick={() => setEventoSelezionato(ev)}
+              style={{padding:'10px 14px',borderRadius:'12px',background:'white',border:'1px solid rgba(0,0,0,0.08)',cursor:'pointer',display:'flex',alignItems:'center',gap:'10px',transition:'box-shadow 0.2s'}}
+              onMouseEnter={e => (e.currentTarget.style.boxShadow='0 2px 12px rgba(0,0,0,0.1)')}
+              onMouseLeave={e => (e.currentTarget.style.boxShadow='none')}
+            >
+              <div style={{width:'10px',height:'10px',borderRadius:'50%',background:getColore(ev.categoria),flexShrink:0}} />
+              <div style={{flex:1,minWidth:0}}>
+                <div style={{fontSize:'13px',fontWeight:600,color:'#1D1D1F',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{ev.titolo}</div>
+                <div style={{fontSize:'11px',color:'rgba(29,29,31,0.5)'}}>{ev.luogo}</div>
+              </div>
+              <div style={{fontSize:'10px',color:'rgba(29,29,31,0.4)',flexShrink:0}}>{ev.categoria?.replace(/_/g,' ')}</div>
+            </div>
+          ))}
+        </div>
+      )}
+
       {/* MAPPA */}
       <div style={{position:'relative'}}>
         {loading && (
@@ -219,58 +256,37 @@ export default function MappaEventi() {
       {/* MAMMUTH•KeySLIDE™ */}
       {eventoSelezionato && (
         <>
-          {/* OVERLAY */}
           <div
             onClick={() => setEventoSelezionato(null)}
             style={{position:'fixed',inset:0,background:'rgba(0,0,0,0.3)',zIndex:1000,backdropFilter:'blur(2px)'}}
           />
-
-          {/* PANEL */}
           <div style={{
-            position:'fixed',
-            bottom:0,
-            left:0,
-            right:0,
-            zIndex:1001,
-            background:'white',
-            borderRadius:'20px 20px 0 0',
+            position:'fixed',bottom:0,left:0,right:0,zIndex:1001,
+            background:'white',borderRadius:'20px 20px 0 0',
             padding:'0 24px 40px',
             boxShadow:'0 -4px 40px rgba(0,0,0,0.15)',
             animation:'slideUp 0.3s cubic-bezier(0.32,0.72,0,1)',
-            maxHeight:'85vh',
-            overflowY:'auto',
+            maxHeight:'85vh',overflowY:'auto',
           }}>
-
-            {/* HANDLE */}
             <div style={{display:'flex',justifyContent:'center',paddingTop:'12px',paddingBottom:'16px'}}>
               <div style={{width:'36px',height:'4px',borderRadius:'2px',background:'rgba(0,0,0,0.15)'}}></div>
             </div>
-
-            {/* CATEGORIA */}
             <div style={{display:'inline-block',background:coloreSelezionato,color:'white',fontSize:'11px',padding:'4px 12px',borderRadius:'20px',marginBottom:'12px',fontWeight:600,letterSpacing:'0.05em'}}>
               {(eventoSelezionato.categoria || '').replace(/_/g,' ')}
             </div>
-
-            {/* TITOLO */}
-            <h2 style={{fontSize:'22px',fontWeight:700,lineHeight:1.2,marginBottom:'12px',color:'#1D1D1F',margin:'0 0 12px 0'}}>
+            <h2 style={{fontSize:'22px',fontWeight:700,lineHeight:1.2,color:'#1D1D1F',margin:'0 0 12px 0'}}>
               {eventoSelezionato.titolo}
             </h2>
-
-            {/* META */}
             <div style={{display:'flex',flexDirection:'column',gap:'8px',marginBottom:'20px'}}>
               <div style={{fontSize:'14px',color:'rgba(29,29,31,0.6)'}}>📍 {eventoSelezionato.luogo || 'Sermoneta'}</div>
               <div style={{fontSize:'14px',color:'rgba(29,29,31,0.6)'}}>🗓 {dataFormattata}</div>
               <div style={{fontSize:'14px',fontWeight:600,color:coloreSelezionato}}>🎟 {ingresso}</div>
             </div>
-
-            {/* DESCRIZIONE */}
             {eventoSelezionato.descrizione && (
               <p style={{fontSize:'14px',lineHeight:1.6,color:'rgba(29,29,31,0.7)',marginBottom:'24px'}}>
                 {eventoSelezionato.descrizione}
               </p>
             )}
-
-            {/* BOTTONI */}
             <div style={{display:'flex',gap:'12px'}}>
               <a href={`/evento/${eventoSelezionato.id}`}
                 style={{flex:1,display:'block',textAlign:'center',background:'#8B7CF6',color:'white',fontSize:'14px',fontWeight:600,padding:'14px',borderRadius:'14px',textDecoration:'none'}}>
@@ -281,13 +297,10 @@ export default function MappaEventi() {
                 ✕
               </button>
             </div>
-
-            {/* LABEL */}
             <div style={{textAlign:'center',marginTop:'16px',fontSize:'10px',color:'rgba(29,29,31,0.3)',letterSpacing:'0.1em'}}>
               MAMMUTH•KeySLIDE™
             </div>
           </div>
-
           <style>{`
             @keyframes slideUp {
               from { transform: translateY(100%); }
