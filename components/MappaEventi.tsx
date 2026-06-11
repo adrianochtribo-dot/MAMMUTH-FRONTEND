@@ -122,6 +122,7 @@ export default function MappaEventi() {
     const init = async () => {
       try {
         const L = (await import('leaflet')).default
+        // @ts-ignore
         await import('leaflet/dist/leaflet.css')
         leafletRef.current = L
 
