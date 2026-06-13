@@ -16,7 +16,9 @@ import {
   Bike,
   FlaskConical,
   Search,
-  X,
+  ChevronRight,
+  ChevronDown,
+  Check,
 } from 'lucide-react';
 
 export interface CategoryDefinition {
@@ -241,6 +243,7 @@ export default function CategoryFilterSheet({
 
   return (
     <>
+      {/* Pulsante flottante "Discover" */}
       <button
         onClick={() => setOpen(true)}
         className="fixed bottom-6 left-1/2 -translate-x-1/2 z-30
@@ -270,121 +273,136 @@ export default function CategoryFilterSheet({
         <Drawer.Portal>
           <Drawer.Overlay className="fixed inset-0 z-40 bg-black/30 backdrop-blur-sm" />
           <Drawer.Content
-            className="fixed inset-x-0 bottom-0 z-50 mt-24 flex max-h-[70vh]
-                       flex-col rounded-t-3xl bg-[#F5F5F7]
-                       sm:left-1/2 sm:right-auto sm:-translate-x-1/2 sm:top-auto
-                       sm:w-[480px] sm:max-h-[600px] sm:rounded-3xl sm:bottom-6"
+            className="fixed inset-x-0 bottom-0 z-50 flex max-h-[60vh]
+                       flex-col rounded-t-2xl bg-white
+                       sm:left-1/2 sm:right-auto sm:top-auto sm:bottom-6
+                       sm:-translate-x-1/2 sm:w-[420px]
+                       sm:max-h-[500px] sm:rounded-2xl"
           >
-            <div className="mx-auto mt-3 h-1.5 w-12 rounded-full bg-black/10 sm:hidden" />
+            {/* Drag handle */}
+            <div className="mx-auto mt-2.5 h-1 w-9 rounded-full bg-black/15 sm:hidden" />
 
-            <div className="flex items-center justify-between px-6 pt-5 pb-3">
-              <div>
-                <Drawer.Title className="text-[20px] font-semibold text-[#1D1D1F]">
-                  Categorie
-                </Drawer.Title>
-                {typeof resultCount === 'number' && (
-                  <p className="text-sm text-[#86868B]">
-                    {resultCount} eventi corrispondenti
-                  </p>
-                )}
-              </div>
-              <div className="flex items-center gap-2">
-                {totalActive > 0 && (
-                  <button
-                    onClick={clearAll}
-                    className="text-sm font-medium text-[#0EA5E9]"
-                  >
-                    Azzera
-                  </button>
-                )}
-                <button
-                  onClick={() => setOpen(false)}
-                  className="flex h-8 w-8 items-center justify-center
-                             rounded-full bg-black/5 text-[#1D1D1F]"
-                  aria-label="Chiudi"
-                >
-                  <X size={16} />
-                </button>
-              </div>
-            </div>
-
-            <div className="overflow-y-auto px-6 pb-8">
-              <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
-                {CATEGORIES.map((cat) => {
-                  const Icon = cat.icon;
-                  const isActive = activeFilters.macro.includes(cat.id);
-                  const isExpanded = expandedMacro === cat.id;
-
-                  return (
-                    <div
-                      key={cat.id}
-                      className={
-                        isExpanded
-                          ? 'col-span-2 sm:col-span-3'
-                          : 'col-span-1'
-                      }
-                    >
-                      <button
-                        onClick={() => {
-                          toggleExpand(cat.id);
-                        }}
-                        style={{
-                          backgroundColor: isActive ? cat.color : '#FFFFFF',
-                          boxShadow: isActive
-                            ? `0 0 0 2px ${cat.glow}, 0 0 18px ${cat.glow}55`
-                            : '0 1px 2px rgba(0,0,0,0.04)',
-                        }}
-                        className="flex w-full flex-col items-start gap-2
-                                   rounded-2xl p-4 text-left
-                                   transition-all duration-200 ease-out"
-                      >
-                        <div
-                          style={{ backgroundColor: cat.color }}
-                          className="flex h-9 w-9 items-center justify-center rounded-full"
-                        >
-                          <Icon size={18} strokeWidth={2} color="#1D1D1F" />
-                        </div>
-                        <span className="text-[13px] font-medium leading-tight text-[#1D1D1F]">
-                          {cat.label}
-                        </span>
-                      </button>
-
-                      {isExpanded && (
-                        <div className="mt-3 flex flex-wrap gap-2 pb-1">
-                          {cat.subcategories.map((sub) => {
-                            const subActive = activeFilters.sub.includes(sub.id);
-                            return (
-                              <button
-                                key={sub.id}
-                                onClick={() => toggleSub(cat.id, sub.id)}
-                                style={{
-                                  backgroundColor: subActive
-                                    ? cat.color
-                                    : '#FFFFFF',
-                                  boxShadow: subActive
-                                    ? `0 0 0 1.5px ${cat.glow}, 0 0 12px ${cat.glow}66`
-                                    : '0 1px 2px rgba(0,0,0,0.04)',
-                                  color: '#1D1D1F',
-                                }}
-                                className="rounded-full px-3.5 py-1.5 text-[12.5px]
-                                           font-medium transition-all duration-200"
-                              >
-                                {sub.label}
-                              </button>
-                            );
-                          })}
-                        </div>
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-
-            <div className="border-t border-black/5 bg-[#F5F5F7] px-6 py-4 sm:rounded-b-3xl">
+            {/* Header: titolo + Chiudi/Annulla testuale (HIG) */}
+            <div className="flex items-center justify-between px-5 pt-4 pb-2">
+              <button
+                onClick={clearAll}
+                className={`text-[15px] font-normal ${
+                  totalActive > 0 ? 'text-[#0A84FF]' : 'text-transparent pointer-events-none'
+                }`}
+              >
+                Azzera
+              </button>
+              <h2 className="text-[17px] font-semibold text-[#1D1D1F]">
+                Categorie
+              </h2>
               <button
                 onClick={() => setOpen(false)}
-                className="w-full rounded-full bg-[#1D1D1F] py-3.5
+                className="text-[15px] font-medium text-[#0A84FF]"
+              >
+                Chiudi
+              </button>
+            </div>
+
+            {typeof resultCount === 'number' && (
+              <p className="px-5 pb-2 text-[13px] text-[#86868B]">
+                {resultCount} eventi corrispondenti
+              </p>
+            )}
+
+            {/* Lista verticale, sfondo unico, separatori sottili */}
+            <div className="flex-1 overflow-y-auto">
+              {CATEGORIES.map((cat, idx) => {
+                const Icon = cat.icon;
+                const isActive = activeFilters.macro.includes(cat.id);
+                const isExpanded = expandedMacro === cat.id;
+                const activeSubCount = cat.subcategories.filter((s) =>
+                  activeFilters.sub.includes(s.id)
+                ).length;
+
+                return (
+                  <div key={cat.id}>
+                    {/* Riga macro-categoria */}
+                    <button
+                      onClick={() => toggleExpand(cat.id)}
+                      className="flex w-full items-center gap-3 px-5 py-3
+                                 text-left active:bg-black/[0.03] transition-colors"
+                    >
+                      {/* Icona bianca su squircle colorato */}
+                      <div
+                        style={{ backgroundColor: cat.glow }}
+                        className="flex h-8 w-8 shrink-0 items-center justify-center rounded-[9px]"
+                      >
+                        <Icon size={17} strokeWidth={2.2} color="#FFFFFF" />
+                      </div>
+
+                      <span className="flex-1 text-[15px] text-[#1D1D1F]">
+                        {cat.label}
+                      </span>
+
+                      {/* Contatore selezioni o badge attivo */}
+                      {(isActive || activeSubCount > 0) && (
+                        <span
+                          style={{ backgroundColor: cat.glow }}
+                          className="flex h-5 min-w-5 items-center justify-center
+                                     rounded-full px-1.5 text-[11px] font-semibold text-white"
+                        >
+                          {activeSubCount > 0 ? activeSubCount : '✓'}
+                        </span>
+                      )}
+
+                      {/* Freccetta (chevron) — HIG */}
+                      {isExpanded ? (
+                        <ChevronDown size={16} strokeWidth={2.5} className="text-[#C7C7CC]" />
+                      ) : (
+                        <ChevronRight size={16} strokeWidth={2.5} className="text-[#C7C7CC]" />
+                      )}
+                    </button>
+
+                    {/* Separatore sottile (non a tutta larghezza) */}
+                    {idx < CATEGORIES.length - 1 && (
+                      <div className="ml-5 h-px bg-black/[0.06]" />
+                    )}
+
+                    {/* Sottocategorie: lista indentata, righe con checkmark */}
+                    {isExpanded && (
+                      <div className="bg-black/[0.015]">
+                        {cat.subcategories.map((sub, subIdx) => {
+                          const subActive = activeFilters.sub.includes(sub.id);
+                          return (
+                            <div key={sub.id}>
+                              <button
+                                onClick={() => toggleSub(cat.id, sub.id)}
+                                className="flex w-full items-center gap-3 pl-[52px] pr-5 py-2.5
+                                           text-left active:bg-black/[0.03] transition-colors"
+                              >
+                                <span className="flex-1 text-[14px] text-[#3A3A3C]">
+                                  {sub.label}
+                                </span>
+                                {subActive && (
+                                  <Check size={16} strokeWidth={2.5} color={cat.glow} />
+                                )}
+                              </button>
+                              {subIdx < cat.subcategories.length - 1 && (
+                                <div className="ml-[52px] h-px bg-black/[0.06]" />
+                              )}
+                            </div>
+                          );
+                        })}
+                        {idx < CATEGORIES.length - 1 && (
+                          <div className="ml-5 h-px bg-black/[0.06]" />
+                        )}
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* Footer azione */}
+            <div className="border-t border-black/[0.06] bg-white px-5 py-3.5 sm:rounded-b-2xl">
+              <button
+                onClick={() => setOpen(false)}
+                className="w-full rounded-full bg-[#1D1D1F] py-3
                            text-[15px] font-semibold text-white
                            transition-transform active:scale-[0.98]"
               >
