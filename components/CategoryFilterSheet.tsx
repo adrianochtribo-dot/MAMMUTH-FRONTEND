@@ -243,7 +243,6 @@ export default function CategoryFilterSheet({
 
   return (
     <>
-      {/* Pulsante flottante "Discover" */}
       <button
         onClick={() => setOpen(true)}
         className="fixed bottom-6 left-1/2 -translate-x-1/2 z-30
@@ -279,10 +278,8 @@ export default function CategoryFilterSheet({
                        sm:-translate-x-1/2 sm:w-[420px]
                        sm:max-h-[500px] sm:rounded-2xl"
           >
-            {/* Drag handle */}
             <div className="mx-auto mt-2.5 h-1 w-9 rounded-full bg-black/15 sm:hidden" />
 
-            {/* Header: titolo + Chiudi/Annulla testuale (HIG) */}
             <div className="flex items-center justify-between px-5 pt-4 pb-2">
               <button
                 onClick={clearAll}
@@ -309,7 +306,6 @@ export default function CategoryFilterSheet({
               </p>
             )}
 
-            {/* Lista verticale, sfondo unico, separatori sottili */}
             <div className="flex-1 overflow-y-auto">
               {CATEGORIES.map((cat, idx) => {
                 const Icon = cat.icon;
@@ -321,13 +317,11 @@ export default function CategoryFilterSheet({
 
                 return (
                   <div key={cat.id}>
-                    {/* Riga macro-categoria */}
                     <button
                       onClick={() => toggleExpand(cat.id)}
                       className="flex w-full items-center gap-3 px-5 py-3
                                  text-left active:bg-black/[0.03] transition-colors"
                     >
-                      {/* Icona bianca su squircle colorato */}
                       <div
                         style={{ backgroundColor: cat.glow }}
                         className="flex h-8 w-8 shrink-0 items-center justify-center rounded-[9px]"
@@ -339,7 +333,6 @@ export default function CategoryFilterSheet({
                         {cat.label}
                       </span>
 
-                      {/* Contatore selezioni o badge attivo */}
                       {(isActive || activeSubCount > 0) && (
                         <span
                           style={{ backgroundColor: cat.glow }}
@@ -350,7 +343,6 @@ export default function CategoryFilterSheet({
                         </span>
                       )}
 
-                      {/* Freccetta (chevron) — HIG */}
                       {isExpanded ? (
                         <ChevronDown size={16} strokeWidth={2.5} className="text-[#C7C7CC]" />
                       ) : (
@@ -358,12 +350,10 @@ export default function CategoryFilterSheet({
                       )}
                     </button>
 
-                    {/* Separatore sottile (non a tutta larghezza) */}
                     {idx < CATEGORIES.length - 1 && (
                       <div className="ml-5 h-px bg-black/[0.06]" />
                     )}
 
-                    {/* Sottocategorie: lista indentata, righe con checkmark */}
                     {isExpanded && (
                       <div className="bg-black/[0.015]">
                         {cat.subcategories.map((sub, subIdx) => {
@@ -398,7 +388,6 @@ export default function CategoryFilterSheet({
               })}
             </div>
 
-            {/* Footer azione */}
             <div className="border-t border-black/[0.06] bg-white px-5 py-3.5 sm:rounded-b-2xl">
               <button
                 onClick={() => setOpen(false)}
