@@ -247,12 +247,12 @@ export default function CategoryFilterSheet({
         onClick={() => setOpen(true)}
         className="fixed bottom-6 left-1/2 -translate-x-1/2 z-30
                    flex items-center gap-2 rounded-full
-                   bg-white/90 backdrop-blur-md
+                   bg-white/60 backdrop-blur-xl backdrop-saturate-150
                    px-5 py-3 shadow-lg shadow-black/10
-                   border border-black/5
+                   border border-white/40
                    text-[15px] font-medium text-[#1D1D1F]
                    transition-transform active:scale-95
-                   hover:shadow-xl"
+                   hover:shadow-xl hover:bg-white/70"
         aria-label="Esplora categorie eventi"
       >
         <Search size={18} strokeWidth={2.2} />
@@ -260,7 +260,7 @@ export default function CategoryFilterSheet({
         {totalActive > 0 && (
           <span
             className="ml-1 flex h-5 min-w-5 items-center justify-center
-                       rounded-full bg-[#1D1D1F] px-1.5 text-[11px]
+                       rounded-full bg-[#1D1D1F]/80 backdrop-blur px-1.5 text-[11px]
                        font-semibold text-white"
           >
             {totalActive}
@@ -270,13 +270,17 @@ export default function CategoryFilterSheet({
 
       <Drawer.Root open={open} onOpenChange={setOpen}>
         <Drawer.Portal>
-          <Drawer.Overlay className="fixed inset-0 z-40 bg-black/30 backdrop-blur-sm" />
+          {/* Overlay leggero: la mappa resta visibile e leggibile dietro */}
+          <Drawer.Overlay className="fixed inset-0 z-40 bg-black/10 backdrop-blur-[2px]" />
           <Drawer.Content
             className="fixed inset-x-0 bottom-0 z-50 flex max-h-[60vh]
-                       flex-col rounded-t-2xl bg-white
+                       flex-col rounded-t-2xl
+                       bg-white/70 backdrop-blur-2xl backdrop-saturate-150
+                       border border-white/40 border-b-0
+                       shadow-[0_-8px_40px_rgba(0,0,0,0.12)]
                        sm:left-1/2 sm:right-auto sm:top-auto sm:bottom-6
                        sm:-translate-x-1/2 sm:w-[420px]
-                       sm:max-h-[500px] sm:rounded-2xl"
+                       sm:max-h-[500px] sm:rounded-2xl sm:border-b"
           >
             <div className="mx-auto mt-2.5 h-1 w-9 rounded-full bg-black/15 sm:hidden" />
 
@@ -301,7 +305,7 @@ export default function CategoryFilterSheet({
             </div>
 
             {typeof resultCount === 'number' && (
-              <p className="px-5 pb-2 text-[13px] text-[#86868B]">
+              <p className="px-5 pb-2 text-[13px] text-[#3A3A3C]">
                 {resultCount} eventi corrispondenti
               </p>
             )}
@@ -320,11 +324,11 @@ export default function CategoryFilterSheet({
                     <button
                       onClick={() => toggleExpand(cat.id)}
                       className="flex w-full items-center gap-3 px-5 py-3
-                                 text-left active:bg-black/[0.03] transition-colors"
+                                 text-left active:bg-white/30 transition-colors"
                     >
                       <div
                         style={{ backgroundColor: cat.glow }}
-                        className="flex h-8 w-8 shrink-0 items-center justify-center rounded-[9px]"
+                        className="flex h-8 w-8 shrink-0 items-center justify-center rounded-[9px] shadow-sm"
                       >
                         <Icon size={17} strokeWidth={2.2} color="#FFFFFF" />
                       </div>
@@ -344,18 +348,18 @@ export default function CategoryFilterSheet({
                       )}
 
                       {isExpanded ? (
-                        <ChevronDown size={16} strokeWidth={2.5} className="text-[#C7C7CC]" />
+                        <ChevronDown size={16} strokeWidth={2.5} className="text-[#8E8E93]" />
                       ) : (
-                        <ChevronRight size={16} strokeWidth={2.5} className="text-[#C7C7CC]" />
+                        <ChevronRight size={16} strokeWidth={2.5} className="text-[#8E8E93]" />
                       )}
                     </button>
 
                     {idx < CATEGORIES.length - 1 && (
-                      <div className="ml-5 h-px bg-black/[0.06]" />
+                      <div className="ml-5 h-px bg-black/[0.08]" />
                     )}
 
                     {isExpanded && (
-                      <div className="bg-black/[0.015]">
+                      <div className="bg-white/30">
                         {cat.subcategories.map((sub, subIdx) => {
                           const subActive = activeFilters.sub.includes(sub.id);
                           return (
@@ -363,7 +367,7 @@ export default function CategoryFilterSheet({
                               <button
                                 onClick={() => toggleSub(cat.id, sub.id)}
                                 className="flex w-full items-center gap-3 pl-[52px] pr-5 py-2.5
-                                           text-left active:bg-black/[0.03] transition-colors"
+                                           text-left active:bg-white/40 transition-colors"
                               >
                                 <span className="flex-1 text-[14px] text-[#3A3A3C]">
                                   {sub.label}
@@ -373,13 +377,13 @@ export default function CategoryFilterSheet({
                                 )}
                               </button>
                               {subIdx < cat.subcategories.length - 1 && (
-                                <div className="ml-[52px] h-px bg-black/[0.06]" />
+                                <div className="ml-[52px] h-px bg-black/[0.08]" />
                               )}
                             </div>
                           );
                         })}
                         {idx < CATEGORIES.length - 1 && (
-                          <div className="ml-5 h-px bg-black/[0.06]" />
+                          <div className="ml-5 h-px bg-black/[0.08]" />
                         )}
                       </div>
                     )}
@@ -388,10 +392,10 @@ export default function CategoryFilterSheet({
               })}
             </div>
 
-            <div className="border-t border-black/[0.06] bg-white px-5 py-3.5 sm:rounded-b-2xl">
+            <div className="border-t border-white/40 bg-white/50 backdrop-blur-xl px-5 py-3.5 sm:rounded-b-2xl">
               <button
                 onClick={() => setOpen(false)}
-                className="w-full rounded-full bg-[#1D1D1F] py-3
+                className="w-full rounded-full bg-[#1D1D1F]/90 backdrop-blur py-3
                            text-[15px] font-semibold text-white
                            transition-transform active:scale-[0.98]"
               >
