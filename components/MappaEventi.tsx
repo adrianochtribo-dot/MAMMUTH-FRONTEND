@@ -79,11 +79,12 @@ export default function MappaEventi() {
     const bounds: [number, number][] = []
     const coordCount: Record<string, number> = {}
 
-    // Bounding box plausibile per la Provincia di Latina / Lazio meridionale
-    const LAT_MIN = 41.2
+    // Bounding box allargato: include Provincia di Latina, Lazio meridionale
+    // e Isole Pontine (Ponza, Ventotene) — lat fino a 40.7
+    const LAT_MIN = 40.7
     const LAT_MAX = 41.8
     const LNG_MIN = 12.6
-    const LNG_MAX = 13.3
+    const LNG_MAX = 13.6
 
     eventiDaMostrare.forEach((evento: Evento) => {
       if (!evento.lat || !evento.lng) return
