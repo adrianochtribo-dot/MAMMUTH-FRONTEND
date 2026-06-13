@@ -19,15 +19,6 @@ import {
   X,
 } from 'lucide-react';
 
-// =============================================================
-// MAMMUTH•EVENTS™ — CategoryFilterSheet
-// Pattern: floating "Discover" pill + bottom sheet (mobile) /
-//          side drawer (desktop) con macro + sottocategorie.
-// Palette: ElppaK•Clean™ (titanium #F5F5F7 / ink #1D1D1F)
-//          + 12 colori pastello assegnati alle macro-categorie,
-//          con glow neon sullo stato selezionato.
-// =============================================================
-
 export interface CategoryDefinition {
   id: string;
   label: string;
@@ -279,10 +270,10 @@ export default function CategoryFilterSheet({
         <Drawer.Portal>
           <Drawer.Overlay className="fixed inset-0 z-40 bg-black/30 backdrop-blur-sm" />
           <Drawer.Content
-            className="fixed inset-x-0 bottom-0 z-50 mt-24 flex max-h-[85vh]
+            className="fixed inset-x-0 bottom-0 z-50 mt-24 flex max-h-[70vh]
                        flex-col rounded-t-3xl bg-[#F5F5F7]
-                       sm:left-1/2 sm:right-auto sm:-translate-x-1/2
-                       sm:w-[480px] sm:rounded-3xl sm:bottom-6"
+                       sm:left-1/2 sm:right-auto sm:-translate-x-1/2 sm:top-auto
+                       sm:w-[480px] sm:max-h-[600px] sm:rounded-3xl sm:bottom-6"
           >
             <div className="mx-auto mt-3 h-1.5 w-12 rounded-full bg-black/10 sm:hidden" />
 
@@ -406,10 +397,6 @@ export default function CategoryFilterSheet({
     </>
   );
 }
-
-// =============================================================
-// Helper: filtro lato client (campi reali Supabase: categoria/sottocategoria)
-// =============================================================
 
 export function useFilteredEvents<T extends { categoria: string; sottocategoria?: string | null }>(events: T[], filters: ActiveFilters): T[] {
   return useMemo(() => {
