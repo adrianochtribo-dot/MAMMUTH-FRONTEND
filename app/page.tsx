@@ -71,15 +71,7 @@ export default function Home() {
             <a href="https://mammuth-ev-production.up.railway.app/docs" target="_blank" style={{color:'#38BDF8'}} className="hover:underline flex items-center gap-1">
               Safety Engine API →
             </a>
-            
-              href="https://adrianochtribo-dot.github.io/MAMMUTH-EV/developer/pitch.html"
-              target="_blank"
-              className="flex items-center gap-2 px-5 py-2 rounded-full text-sm font-medium transition-opacity hover:opacity-80"
-              style={{
-                background:'linear-gradient(135deg, #8B7CF6, #E879A0)',
-                color:'#fff',
-                textDecoration:'none',
-              }}>
+            <a href="https://adrianochtribo-dot.github.io/MAMMUTH-EV/developer/pitch.html" target="_blank" className="flex items-center gap-2 px-5 py-2 rounded-full text-sm font-medium transition-opacity hover:opacity-80" style={{background:'linear-gradient(135deg, #8B7CF6, #E879A0)', color:'#fff', textDecoration:'none'}}>
               📊 Pitch Deck →
             </a>
           </div>
