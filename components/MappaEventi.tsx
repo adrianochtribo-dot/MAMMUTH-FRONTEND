@@ -79,11 +79,19 @@ export default function MappaEventi() {
     const bounds: [number, number][] = []
     const coordCount: Record<string, number> = {}
 
+    // Bounding box plausibile per la Provincia di Latina / Lazio meridionale
+    const LAT_MIN = 41.2
+    const LAT_MAX = 41.8
+    const LNG_MIN = 12.6
+    const LNG_MAX = 13.3
+
     eventiDaMostrare.forEach((evento: Evento) => {
       if (!evento.lat || !evento.lng) return
       const lat = parseFloat(String(evento.lat))
       const lng = parseFloat(String(evento.lng))
       if (isNaN(lat) || isNaN(lng)) return
+      if (lat === 0 || lng === 0) return
+      if (lat < LAT_MIN || lat > LAT_MAX || lng < LNG_MIN || lng > LNG_MAX) return
 
       const key = `${lat},${lng}`
       coordCount[key] = (coordCount[key] || 0) + 1
@@ -116,7 +124,7 @@ export default function MappaEventi() {
         } catch (e) {}
       }
     } else {
-      map.setView([41.55, 12.983], 13)
+      map.setView([41.534, 13.018], 13) // Centro Sermoneta
     }
   }, [])
 
@@ -140,7 +148,7 @@ export default function MappaEventi() {
         })
 
         const map = L.map(mapRef.current!, {
-          center: [41.55, 12.983],
+          center: [41.534, 13.018],
           zoom: 13,
           zoomControl: true,
         })
