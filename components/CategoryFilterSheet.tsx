@@ -19,6 +19,15 @@ import {
   X,
 } from 'lucide-react';
 
+// =============================================================
+// MAMMUTH•EVENTS™ — CategoryFilterSheet
+// Pattern: floating "Discover" pill + bottom sheet (mobile) /
+//          side drawer (desktop) con macro + sottocategorie.
+// Palette: ElppaK•Clean™ (titanium #F5F5F7 / ink #1D1D1F)
+//          + 12 colori pastello assegnati alle macro-categorie,
+//          con glow neon sullo stato selezionato.
+// =============================================================
+
 export interface CategoryDefinition {
   id: string;
   label: string;
@@ -398,9 +407,11 @@ export default function CategoryFilterSheet({
   );
 }
 
-export function useFilteredEvents
-  T extends { categoria: string; sottocategoria?: string | null }
->(events: T[], filters: ActiveFilters): T[] {
+// =============================================================
+// Helper: filtro lato client (campi reali Supabase: categoria/sottocategoria)
+// =============================================================
+
+export function useFilteredEvents<T extends { categoria: string; sottocategoria?: string | null }>(events: T[], filters: ActiveFilters): T[] {
   return useMemo(() => {
     if (filters.macro.length === 0 && filters.sub.length === 0) return events;
     return events.filter((ev) => {
