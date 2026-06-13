@@ -424,8 +424,8 @@ export default function MappaEventi() {
               </p>
             )}
             <div style={{ display: 'flex', gap: '12px' }}>
-              
-                href={`/evento/${eventoSelezionato.id}`}
+              <button
+                onClick={() => window.location.href = `/evento/${eventoSelezionato.id}`}
                 style={{
                   flex: 1,
                   display: 'block',
@@ -436,11 +436,12 @@ export default function MappaEventi() {
                   fontWeight: 600,
                   padding: '14px',
                   borderRadius: '14px',
-                  textDecoration: 'none',
+                  border: 'none',
+                  cursor: 'pointer',
                 }}
               >
                 Scopri di più →
-              </a>
+              </button>
               <button
                 onClick={() => setEventoSelezionato(null)}
                 style={{
