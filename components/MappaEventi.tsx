@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useRef, useState, useCallback } from 'react'
+import { useEffect, useRef, useState, useCallback, useMemo } from 'react'
 import CategoryFilterSheet, {
   CATEGORIES,
   useFilteredEvents,
@@ -67,6 +67,14 @@ export default function MappaEventi() {
       return false
     return true
   })
+
+  const categoryCounts = useMemo(() => {
+    const counts: Record<string, number> = {}
+    eventi.forEach((ev) => {
+      counts[ev.categoria] = (counts[ev.categoria] || 0) + 1
+    })
+    return counts
+  }, [eventi])
 
   const aggiornaMarker = useCallback((eventiDaMostrare: Evento[]) => {
     const L = leafletRef.current
@@ -369,6 +377,7 @@ export default function MappaEventi() {
           activeFilters={filters}
           onChange={setFilters}
           resultCount={eventiFiltrati.length}
+          categoryCounts={categoryCounts}
         />
       </div>
 
