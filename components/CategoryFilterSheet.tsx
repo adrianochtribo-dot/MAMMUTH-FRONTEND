@@ -32,8 +32,8 @@ export interface CategoryDefinition {
 
 export const CATEGORIES: CategoryDefinition[] = [
   {
-    id: 'tradizioni_folklore',
-    label: 'Tradizioni & Folklore',
+    id: 'palio',
+    label: 'Palio',
     icon: Crown,
     color: '#F6D9D2',
     glow: '#FF6B5A',
@@ -41,6 +41,16 @@ export const CATEGORIES: CategoryDefinition[] = [
       { id: 'palio_equestre', label: 'Palio Equestre' },
       { id: 'palio_remiero', label: 'Palio Remiero' },
       { id: 'palio_forza', label: 'Palio di Forza' },
+      { id: 'palio_rievocazione', label: 'Palio Storico / Rievocazione' },
+    ],
+  },
+  {
+    id: 'tradizioni_folklore',
+    label: 'Tradizioni & Folklore',
+    icon: Crown,
+    color: '#EDE9FE',
+    glow: '#A78BFA',
+    subcategories: [
       { id: 'corteo_storico', label: 'Corteo Storico' },
       { id: 'carnevale_estivo', label: 'Carnevale Estivo' },
       { id: 'processione_danzante', label: 'Processione Danzante' },
@@ -60,14 +70,15 @@ export const CATEGORIES: CategoryDefinition[] = [
     ],
   },
   {
-    id: 'enogastronomia',
-    label: 'Enogastronomia',
+    id: 'sagra',
+    label: 'Sagra',
     icon: Wine,
     color: '#F7E3CE',
     glow: '#F59E0B',
     subcategories: [
+      { id: 'sagra_gastronomica', label: 'Sagra Gastronomica' },
+      { id: 'sagra_territoriale', label: 'Sagra Territoriale' },
       { id: 'festival_vino', label: 'Festival del Vino' },
-      { id: 'sagra', label: 'Sagra' },
       { id: 'street_food', label: 'Street Food' },
       { id: 'prodotto_dop_igp', label: 'Prodotto DOP/IGP' },
     ],
@@ -204,10 +215,10 @@ export default function CategoryFilterSheet({
 
   const totalActive = activeFilters.macro.length + activeFilters.sub.length;
 
-  // Triade fissa: identita del progetto (Feste Religiose, Sagre/Enogastronomia,
-  // Palii/Tradizioni), non le prime 3 per conteggio. Le altre 9 (incluse
-  // quelle a 0) vanno nella griglia, ordinate per conteggio.
-  const FEATURED_IDS = ['feste_religiose', 'enogastronomia', 'tradizioni_folklore'];
+  // Triade fissa: identita del progetto — SAGRA, FESTA RELIGIOSA, PALIO.
+  // Non le prime 3 per conteggio. Le altre 10 (incluse quelle a 0) vanno
+  // nella griglia, ordinate per conteggio.
+  const FEATURED_IDS = ['sagra', 'feste_religiose', 'palio'];
 
   const topThree = useMemo(() => {
     return FEATURED_IDS.map((id) => CATEGORIES.find((c) => c.id === id)!).filter(Boolean);
