@@ -1,0 +1,41 @@
+name: Aggiorna Dipendenze
+
+on:
+  workflow_dispatch:
+    inputs:
+      packages:
+        description: 'Pacchetti npm da installare (separati da spazio)'
+        required: true
+        default: 'zustand'
+
+permissions:
+  contents: write
+
+jobs:
+  update-lockfile:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Installa pacchetti e aggiorna lockfile
+        run: npm install ${{ github.event.inputs.packages }}
+
+      - name: Commit ed esegui push
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add package.json package-lock.json
+          if git diff --cached --quiet; then
+            echo "Nessuna modifica - pacchetto gia presente o non valido"
+            exit 0
+          fi
+          git commit -m "chore: add ${{ github.event.inputs.packages }} dependency (via Aggiorna Dipendenze workflow)
+
+          Automated dependency addition. Updates package.json and
+          package-lock.json together to keep npm ci (used by Vercel)
+          consistent. No source code changes."
+          git push
