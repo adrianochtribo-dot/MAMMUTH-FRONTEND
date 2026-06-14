@@ -19,6 +19,7 @@ import {
   ChevronRight,
   ChevronDown,
   Check,
+  Menu,
 } from 'lucide-react';
 
 export interface CategoryDefinition {
@@ -201,13 +202,21 @@ export default function CategoryFilterSheet({
 }: CategoryFilterSheetProps) {
   const [open, setOpen] = useState(false);
   const [expandedMacro, setExpandedMacro] = useState<string | null>(null);
+  const [showEmpty, setShowEmpty] = useState(false);
 
   const totalActive = activeFilters.macro.length + activeFilters.sub.length;
 
-  const sortedCategories = useMemo(() => {
-    return [...CATEGORIES].sort(
+  // Categorie con almeno 1 evento: righe larghe, in evidenza, ordinate per conteggio
+  const populated = useMemo(() => {
+    return CATEGORIES.filter((c) => (categoryCounts[c.id] ?? 0) > 0).sort(
       (a, b) => (categoryCounts[b.id] ?? 0) - (categoryCounts[a.id] ?? 0)
     );
+  }, [categoryCounts]);
+
+  // Categorie a 0 eventi: nascoste in una griglia compatta dietro il pulsante "menu",
+  // visibili per coerenza "verità territoriale certificata" ma senza occupare spazio
+  const empty = useMemo(() => {
+    return CATEGORIES.filter((c) => (categoryCounts[c.id] ?? 0) === 0);
   }, [categoryCounts]);
 
   const toggleMacro = (id: string) => {
@@ -244,7 +253,11 @@ export default function CategoryFilterSheet({
     onChange({ macro: newMacro, sub: newSub });
   };
 
-  const clearAll = () => onChange({ macro: [], sub: [] });
+  const clearAll = () => {
+    onChange({ macro: [], sub: [] });
+    setExpandedMacro(null);
+    setShowEmpty(false);
+  };
 
   const toggleExpand = (id: string) =>
     setExpandedMacro((prev) => (prev === id ? null : id));
@@ -278,7 +291,6 @@ export default function CategoryFilterSheet({
 
       <Drawer.Root open={open} onOpenChange={setOpen}>
         <Drawer.Portal>
-          {/* Overlay leggero: la mappa resta visibile e leggibile dietro */}
           <Drawer.Overlay className="fixed inset-0 z-40 bg-black/10 backdrop-blur-[2px]" />
           <Drawer.Content
             className="fixed inset-x-0 bottom-0 z-50 flex max-h-[75vh]
@@ -292,7 +304,7 @@ export default function CategoryFilterSheet({
           >
             <div className="mx-auto mt-2.5 h-1 w-9 rounded-full bg-black/15 sm:hidden" />
 
-            <div className="flex items-center justify-between px-5 pt-4 pb-2">
+            <div className="flex items-center justify-between px-5 pt-4">
               <button
                 onClick={clearAll}
                 className={`text-[15px] font-normal ${
@@ -301,25 +313,41 @@ export default function CategoryFilterSheet({
               >
                 Azzera
               </button>
-              <h2 className="text-[17px] font-semibold text-[#1D1D1F]">
-                Categorie
-              </h2>
-              <button
-                onClick={() => setOpen(false)}
-                className="text-[15px] font-medium text-[#0A84FF]"
-              >
-                Chiudi
-              </button>
+
+              <div className="flex items-center gap-4">
+                <button
+                  onClick={() => setShowEmpty((v) => !v)}
+                  aria-label="Mostra altre categorie"
+                  className={`flex h-8 w-8 items-center justify-center rounded-full transition-colors
+                              ${showEmpty ? 'bg-[#1D1D1F]/10' : 'hover:bg-[#1D1D1F]/5'}`}
+                >
+                  <Menu size={18} strokeWidth={2.2} className="text-[#1D1D1F]/55" />
+                </button>
+                <button
+                  onClick={() => setOpen(false)}
+                  className="text-[15px] font-medium text-[#0A84FF]"
+                >
+                  Chiudi
+                </button>
+              </div>
             </div>
 
-            {typeof resultCount === 'number' && (
-              <p className="px-5 pb-2 text-[13px] text-[#3A3A3C]">
-                {resultCount} eventi corrispondenti
-              </p>
-            )}
+            <div className="px-5 pt-1 pb-2 text-center">
+              <h2
+                className="text-[21px] font-bold tracking-tight bg-clip-text text-transparent
+                           bg-gradient-to-r from-[#8B5CF6] via-[#EC4899] to-[#F59E0B]"
+              >
+                Event•Control
+              </h2>
+              {typeof resultCount === 'number' && (
+                <p className="text-[12px] text-[#3A3A3C]/70 mt-0.5">
+                  {resultCount} eventi corrispondenti
+                </p>
+              )}
+            </div>
 
             <div className="flex-1 overflow-y-auto px-3 pb-2 space-y-1.5">
-              {sortedCategories.map((cat) => {
+              {populated.map((cat) => {
                 const Icon = cat.icon;
                 const count = categoryCounts[cat.id] ?? 0;
                 const isActive = activeFilters.macro.includes(cat.id);
@@ -332,68 +360,72 @@ export default function CategoryFilterSheet({
                 return (
                   <div key={cat.id}>
                     <div
+                      onClick={() => toggleMacro(cat.id)}
                       style={{ backgroundColor: cat.color }}
                       className={`flex items-center gap-3 rounded-2xl px-4 py-3
+                                  shadow-sm cursor-pointer
                                   transition-transform active:scale-[0.98]
-                                  ${hasSelection ? 'ring-2 ring-[#1D1D1F]/15' : ''}`}
+                                  ${hasSelection ? 'ring-2 ring-[#1D1D1F]/20' : ''}`}
                     >
-                      <button
-                        onClick={() => toggleExpand(cat.id)}
-                        className="flex flex-1 items-center gap-3 text-left"
+                      <div
+                        style={{ backgroundColor: cat.glow }}
+                        className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full shadow-sm"
                       >
-                        <div
-                          style={{ backgroundColor: cat.glow }}
-                          className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full shadow-sm"
+                        <Icon size={19} strokeWidth={2.2} color="#FFFFFF" />
+                      </div>
+
+                      <span className="flex-1 text-[15px] font-semibold text-[#1D1D1F]">
+                        {cat.label}
+                      </span>
+
+                      {hasSelection && (
+                        <Check size={16} strokeWidth={2.5} color={cat.glow} />
+                      )}
+
+                      <div
+                        style={{ backgroundColor: cat.glow }}
+                        className="flex h-7 min-w-7 items-center justify-center
+                                   rounded-full px-2 text-[13px] font-bold text-white"
+                      >
+                        {count}
+                      </div>
+
+                      {cat.subcategories.length > 0 && (
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            toggleExpand(cat.id);
+                          }}
+                          aria-label="Mostra sottocategorie"
+                          className="flex h-7 w-7 items-center justify-center rounded-full
+                                     hover:bg-black/5 transition-colors"
                         >
-                          <Icon size={19} strokeWidth={2.2} color="#FFFFFF" />
-                        </div>
-
-                        <span className="flex-1 text-[15px] font-semibold text-[#1D1D1F]">
-                          {cat.label}
-                        </span>
-
-                        {activeSubCount > 0 && (
-                          <Check size={16} strokeWidth={2.5} color={cat.glow} />
-                        )}
-
-                        <div
-                          style={{ backgroundColor: cat.glow }}
-                          className="flex h-7 min-w-7 items-center justify-center
-                                     rounded-full px-2 text-[13px] font-bold text-white"
-                        >
-                          {count}
-                        </div>
-
-                        {isExpanded ? (
-                          <ChevronDown size={16} strokeWidth={2.5} className="text-[#1D1D1F]/40" />
-                        ) : (
-                          <ChevronRight size={16} strokeWidth={2.5} className="text-[#1D1D1F]/40" />
-                        )}
-                      </button>
+                          {isExpanded ? (
+                            <ChevronDown size={16} strokeWidth={2.5} className="text-[#1D1D1F]/45" />
+                          ) : (
+                            <ChevronRight size={16} strokeWidth={2.5} className="text-[#1D1D1F]/45" />
+                          )}
+                        </button>
+                      )}
                     </div>
 
                     {isExpanded && (
-                      <div className="mt-1 rounded-2xl bg-white/50 overflow-hidden">
-                        {cat.subcategories.map((sub, subIdx) => {
+                      <div className="mt-1.5 mb-1 grid grid-cols-2 gap-1.5 px-0.5">
+                        {cat.subcategories.map((sub) => {
                           const subActive = activeFilters.sub.includes(sub.id);
                           return (
-                            <div key={sub.id}>
-                              <button
-                                onClick={() => toggleSub(cat.id, sub.id)}
-                                className="flex w-full items-center gap-3 pl-[60px] pr-5 py-2.5
-                                           text-left active:bg-white/40 transition-colors"
-                              >
-                                <span className="flex-1 text-[14px] text-[#3A3A3C]">
-                                  {sub.label}
-                                </span>
-                                {subActive && (
-                                  <Check size={16} strokeWidth={2.5} color={cat.glow} />
-                                )}
-                              </button>
-                              {subIdx < cat.subcategories.length - 1 && (
-                                <div className="ml-[60px] h-px bg-black/[0.06]" />
-                              )}
-                            </div>
+                            <button
+                              key={sub.id}
+                              onClick={() => toggleSub(cat.id, sub.id)}
+                              style={{
+                                backgroundColor: subActive ? cat.glow : 'rgba(255,255,255,0.65)',
+                                color: subActive ? '#FFFFFF' : '#3A3A3C',
+                              }}
+                              className="rounded-xl px-3 py-2.5 text-[13px] font-medium text-left
+                                         transition-colors active:scale-[0.98]"
+                            >
+                              {sub.label}
+                            </button>
                           );
                         })}
                       </div>
@@ -401,6 +433,48 @@ export default function CategoryFilterSheet({
                   </div>
                 );
               })}
+
+              {showEmpty && empty.length > 0 && (
+                <div className="pt-2">
+                  <p className="px-1 pb-1.5 text-[12px] font-medium text-[#3A3A3C]/60">
+                    Altre categorie
+                  </p>
+                  <div className="grid grid-cols-2 gap-1.5">
+                    {empty.map((cat) => {
+                      const Icon = cat.icon;
+                      const isActive = activeFilters.macro.includes(cat.id);
+                      return (
+                        <div
+                          key={cat.id}
+                          onClick={() => toggleMacro(cat.id)}
+                          style={{ backgroundColor: cat.color }}
+                          className={`flex items-center gap-2 rounded-xl px-3 py-2.5
+                                      cursor-pointer opacity-70
+                                      transition-transform active:scale-[0.98]
+                                      ${isActive ? 'ring-2 ring-[#1D1D1F]/20 opacity-100' : ''}`}
+                        >
+                          <div
+                            style={{ backgroundColor: cat.glow }}
+                            className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full"
+                          >
+                            <Icon size={14} strokeWidth={2.2} color="#FFFFFF" />
+                          </div>
+                          <span className="flex-1 text-[12.5px] font-medium text-[#1D1D1F] leading-tight">
+                            {cat.label}
+                          </span>
+                          <div
+                            style={{ backgroundColor: cat.glow }}
+                            className="flex h-5 min-w-5 items-center justify-center
+                                       rounded-full px-1 text-[11px] font-bold text-white"
+                          >
+                            0
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
             </div>
 
             <div className="border-t border-white/40 bg-white/50 backdrop-blur-xl px-5 py-3.5 sm:rounded-b-2xl">
