@@ -382,7 +382,17 @@ export default function MappaEventi() {
                     <div
                       key={`sugg-luogo-${i}`}
                       onClick={() => {
-                        setFiltroTesto(luogo)
+                        // Se in questo luogo c'è un solo evento, vai
+                        // direttamente alla sua scheda (come per "EVENTI").
+                        // Se ce ne sono di più, filtra lista+mappa su questo
+                        // luogo cosi' l'utente scelga tra quelli.
+                        const eventiQui = eventi.filter((e) => e.luogo === luogo)
+                        if (eventiQui.length === 1) {
+                          setEventoSelezionato(eventiQui[0])
+                          setFiltroTesto('')
+                        } else {
+                          setFiltroTesto(luogo)
+                        }
                         setRicercaAttiva(false)
                       }}
                       style={{
