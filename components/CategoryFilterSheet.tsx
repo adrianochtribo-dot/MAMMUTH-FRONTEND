@@ -19,7 +19,6 @@ import {
   ChevronRight,
   ChevronDown,
   Check,
-  Menu,
 } from 'lucide-react';
 
 export interface CategoryDefinition {
@@ -202,22 +201,17 @@ export default function CategoryFilterSheet({
 }: CategoryFilterSheetProps) {
   const [open, setOpen] = useState(false);
   const [expandedMacro, setExpandedMacro] = useState<string | null>(null);
-  const [showEmpty, setShowEmpty] = useState(false);
 
   const totalActive = activeFilters.macro.length + activeFilters.sub.length;
 
-  // Categorie con almeno 1 evento: righe larghe, in evidenza, ordinate per conteggio
-  const populated = useMemo(() => {
-    return CATEGORIES.filter((c) => (categoryCounts[c.id] ?? 0) > 0).sort(
+  const sorted = useMemo(() => {
+    return [...CATEGORIES].sort(
       (a, b) => (categoryCounts[b.id] ?? 0) - (categoryCounts[a.id] ?? 0)
     );
   }, [categoryCounts]);
 
-  // Categorie a 0 eventi: nascoste in una griglia compatta dietro il pulsante "menu",
-  // visibili per coerenza "verità territoriale certificata" ma senza occupare spazio
-  const empty = useMemo(() => {
-    return CATEGORIES.filter((c) => (categoryCounts[c.id] ?? 0) === 0);
-  }, [categoryCounts]);
+  const topThree = sorted.slice(0, 3);
+  const rest = sorted.slice(3);
 
   const toggleMacro = (id: string) => {
     const isActive = activeFilters.macro.includes(id);
@@ -256,7 +250,6 @@ export default function CategoryFilterSheet({
   const clearAll = () => {
     onChange({ macro: [], sub: [] });
     setExpandedMacro(null);
-    setShowEmpty(false);
   };
 
   const toggleExpand = (id: string) =>
@@ -293,14 +286,14 @@ export default function CategoryFilterSheet({
         <Drawer.Portal>
           <Drawer.Overlay className="fixed inset-0 z-40 bg-black/10 backdrop-blur-[2px]" />
           <Drawer.Content
-            className="fixed inset-x-0 bottom-0 z-50 flex max-h-[75vh]
+            className="fixed inset-x-0 bottom-0 z-50 flex max-h-[85vh]
                        flex-col rounded-t-2xl
                        bg-white/70 backdrop-blur-2xl backdrop-saturate-150
                        border border-white/40 border-b-0
                        shadow-[0_-8px_40px_rgba(0,0,0,0.12)]
                        sm:left-1/2 sm:right-auto sm:top-auto sm:bottom-6
                        sm:-translate-x-1/2 sm:w-[420px]
-                       sm:max-h-[600px] sm:rounded-2xl sm:border-b"
+                       sm:max-h-[700px] sm:rounded-2xl sm:border-b"
           >
             <div className="mx-auto mt-2.5 h-1 w-9 rounded-full bg-black/15 sm:hidden" />
 
@@ -313,28 +306,17 @@ export default function CategoryFilterSheet({
               >
                 Azzera
               </button>
-
-              <div className="flex items-center gap-4">
-                <button
-                  onClick={() => setShowEmpty((v) => !v)}
-                  aria-label="Mostra altre categorie"
-                  className={`flex h-8 w-8 items-center justify-center rounded-full transition-colors
-                              ${showEmpty ? 'bg-[#1D1D1F]/10' : 'hover:bg-[#1D1D1F]/5'}`}
-                >
-                  <Menu size={18} strokeWidth={2.2} className="text-[#1D1D1F]/55" />
-                </button>
-                <button
-                  onClick={() => setOpen(false)}
-                  className="text-[15px] font-medium text-[#0A84FF]"
-                >
-                  Chiudi
-                </button>
-              </div>
+              <button
+                onClick={() => setOpen(false)}
+                className="text-[15px] font-medium text-[#0A84FF]"
+              >
+                Chiudi
+              </button>
             </div>
 
-            <div className="px-5 pt-1 pb-2 text-center">
+            <div className="px-5 pt-1 pb-3 text-center">
               <h2
-                className="text-[21px] font-bold tracking-tight bg-clip-text text-transparent
+                className="text-[22px] font-bold tracking-tight bg-clip-text text-transparent
                            bg-gradient-to-r from-[#8B5CF6] via-[#EC4899] to-[#F59E0B]"
               >
                 Event•Control
@@ -346,135 +328,137 @@ export default function CategoryFilterSheet({
               )}
             </div>
 
-            <div className="flex-1 overflow-y-auto px-3 pb-2 space-y-1.5">
-              {populated.map((cat) => {
-                const Icon = cat.icon;
-                const count = categoryCounts[cat.id] ?? 0;
-                const isActive = activeFilters.macro.includes(cat.id);
-                const isExpanded = expandedMacro === cat.id;
-                const activeSubCount = cat.subcategories.filter((s) =>
-                  activeFilters.sub.includes(s.id)
-                ).length;
-                const hasSelection = isActive || activeSubCount > 0;
+            <div className="flex-1 overflow-y-auto px-3 pb-2">
+              <div className="space-y-2">
+                {topThree.map((cat) => {
+                  const Icon = cat.icon;
+                  const count = categoryCounts[cat.id] ?? 0;
+                  const isActive = activeFilters.macro.includes(cat.id);
+                  const isExpanded = expandedMacro === cat.id;
+                  const activeSubCount = cat.subcategories.filter((s) =>
+                    activeFilters.sub.includes(s.id)
+                  ).length;
+                  const hasSelection = isActive || activeSubCount > 0;
 
-                return (
-                  <div key={cat.id}>
+                  return (
+                    <div key={cat.id}>
+                      <div
+                        onClick={() => toggleMacro(cat.id)}
+                        style={{ backgroundColor: cat.color }}
+                        className={`flex items-center gap-3 rounded-2xl px-4 py-3.5
+                                    shadow-lg cursor-pointer
+                                    transition-transform active:scale-[0.98]
+                                    ${hasSelection ? 'ring-2 ring-[#1D1D1F]/25' : ''}`}
+                      >
+                        <div
+                          style={{ backgroundColor: cat.glow }}
+                          className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full shadow-md"
+                        >
+                          <Icon size={21} strokeWidth={2.2} color="#FFFFFF" />
+                        </div>
+
+                        <span className="flex-1 text-[16px] font-bold text-[#1D1D1F]">
+                          {cat.label}
+                        </span>
+
+                        {hasSelection && (
+                          <Check size={18} strokeWidth={2.5} color={cat.glow} />
+                        )}
+
+                        <div
+                          style={{ backgroundColor: cat.glow }}
+                          className="flex h-8 min-w-8 items-center justify-center
+                                     rounded-full px-2.5 text-[14px] font-bold text-white shadow-sm"
+                        >
+                          {count}
+                        </div>
+
+                        {cat.subcategories.length > 0 && (
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              toggleExpand(cat.id);
+                            }}
+                            aria-label="Mostra sottocategorie"
+                            className="flex h-7 w-7 items-center justify-center rounded-full
+                                       hover:bg-black/5 transition-colors"
+                          >
+                            {isExpanded ? (
+                              <ChevronDown size={18} strokeWidth={2.5} className="text-[#1D1D1F]/45" />
+                            ) : (
+                              <ChevronRight size={18} strokeWidth={2.5} className="text-[#1D1D1F]/45" />
+                            )}
+                          </button>
+                        )}
+                      </div>
+
+                      {isExpanded && (
+                        <div className="mt-1.5 mb-1 grid grid-cols-2 gap-1.5 px-0.5">
+                          {cat.subcategories.map((sub) => {
+                            const subActive = activeFilters.sub.includes(sub.id);
+                            return (
+                              <button
+                                key={sub.id}
+                                onClick={() => toggleSub(cat.id, sub.id)}
+                                style={{
+                                  backgroundColor: subActive ? cat.glow : 'rgba(255,255,255,0.7)',
+                                  color: subActive ? '#FFFFFF' : '#3A3A3C',
+                                }}
+                                className="rounded-xl px-3 py-2.5 text-[13px] font-medium text-left
+                                           shadow-sm transition-colors active:scale-[0.98]"
+                              >
+                                {sub.label}
+                              </button>
+                            );
+                          })}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+
+              <div className="mt-3 grid grid-cols-2 gap-2">
+                {rest.map((cat) => {
+                  const Icon = cat.icon;
+                  const count = categoryCounts[cat.id] ?? 0;
+                  const isActive = activeFilters.macro.includes(cat.id);
+                  const activeSubCount = cat.subcategories.filter((s) =>
+                    activeFilters.sub.includes(s.id)
+                  ).length;
+                  const hasSelection = isActive || activeSubCount > 0;
+
+                  return (
                     <div
+                      key={cat.id}
                       onClick={() => toggleMacro(cat.id)}
                       style={{ backgroundColor: cat.color }}
-                      className={`flex items-center gap-3 rounded-2xl px-4 py-3
-                                  shadow-sm cursor-pointer
-                                  transition-transform active:scale-[0.98]
-                                  ${hasSelection ? 'ring-2 ring-[#1D1D1F]/20' : ''}`}
+                      className={`flex items-center gap-2.5 rounded-2xl px-3 py-3
+                                  shadow-md cursor-pointer
+                                  transition-transform active:scale-[0.97]
+                                  ${count === 0 ? 'opacity-65' : ''}
+                                  ${hasSelection ? 'ring-2 ring-[#1D1D1F]/25 opacity-100' : ''}`}
                     >
                       <div
                         style={{ backgroundColor: cat.glow }}
-                        className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full shadow-sm"
+                        className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full shadow-sm"
                       >
-                        <Icon size={19} strokeWidth={2.2} color="#FFFFFF" />
+                        <Icon size={16} strokeWidth={2.2} color="#FFFFFF" />
                       </div>
-
-                      <span className="flex-1 text-[15px] font-semibold text-[#1D1D1F]">
+                      <span className="flex-1 text-[13px] font-semibold text-[#1D1D1F] leading-tight">
                         {cat.label}
                       </span>
-
-                      {hasSelection && (
-                        <Check size={16} strokeWidth={2.5} color={cat.glow} />
-                      )}
-
                       <div
                         style={{ backgroundColor: cat.glow }}
-                        className="flex h-7 min-w-7 items-center justify-center
-                                   rounded-full px-2 text-[13px] font-bold text-white"
+                        className="flex h-6 min-w-6 items-center justify-center
+                                   rounded-full px-1.5 text-[12px] font-bold text-white"
                       >
                         {count}
                       </div>
-
-                      {cat.subcategories.length > 0 && (
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            toggleExpand(cat.id);
-                          }}
-                          aria-label="Mostra sottocategorie"
-                          className="flex h-7 w-7 items-center justify-center rounded-full
-                                     hover:bg-black/5 transition-colors"
-                        >
-                          {isExpanded ? (
-                            <ChevronDown size={16} strokeWidth={2.5} className="text-[#1D1D1F]/45" />
-                          ) : (
-                            <ChevronRight size={16} strokeWidth={2.5} className="text-[#1D1D1F]/45" />
-                          )}
-                        </button>
-                      )}
                     </div>
-
-                    {isExpanded && (
-                      <div className="mt-1.5 mb-1 grid grid-cols-2 gap-1.5 px-0.5">
-                        {cat.subcategories.map((sub) => {
-                          const subActive = activeFilters.sub.includes(sub.id);
-                          return (
-                            <button
-                              key={sub.id}
-                              onClick={() => toggleSub(cat.id, sub.id)}
-                              style={{
-                                backgroundColor: subActive ? cat.glow : 'rgba(255,255,255,0.65)',
-                                color: subActive ? '#FFFFFF' : '#3A3A3C',
-                              }}
-                              className="rounded-xl px-3 py-2.5 text-[13px] font-medium text-left
-                                         transition-colors active:scale-[0.98]"
-                            >
-                              {sub.label}
-                            </button>
-                          );
-                        })}
-                      </div>
-                    )}
-                  </div>
-                );
-              })}
-
-              {showEmpty && empty.length > 0 && (
-                <div className="pt-2">
-                  <p className="px-1 pb-1.5 text-[12px] font-medium text-[#3A3A3C]/60">
-                    Altre categorie
-                  </p>
-                  <div className="grid grid-cols-2 gap-1.5">
-                    {empty.map((cat) => {
-                      const Icon = cat.icon;
-                      const isActive = activeFilters.macro.includes(cat.id);
-                      return (
-                        <div
-                          key={cat.id}
-                          onClick={() => toggleMacro(cat.id)}
-                          style={{ backgroundColor: cat.color }}
-                          className={`flex items-center gap-2 rounded-xl px-3 py-2.5
-                                      cursor-pointer opacity-70
-                                      transition-transform active:scale-[0.98]
-                                      ${isActive ? 'ring-2 ring-[#1D1D1F]/20 opacity-100' : ''}`}
-                        >
-                          <div
-                            style={{ backgroundColor: cat.glow }}
-                            className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full"
-                          >
-                            <Icon size={14} strokeWidth={2.2} color="#FFFFFF" />
-                          </div>
-                          <span className="flex-1 text-[12.5px] font-medium text-[#1D1D1F] leading-tight">
-                            {cat.label}
-                          </span>
-                          <div
-                            style={{ backgroundColor: cat.glow }}
-                            className="flex h-5 min-w-5 items-center justify-center
-                                       rounded-full px-1 text-[11px] font-bold text-white"
-                          >
-                            0
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                </div>
-              )}
+                  );
+                })}
+              </div>
             </div>
 
             <div className="border-t border-white/40 bg-white/50 backdrop-blur-xl px-5 py-3.5 sm:rounded-b-2xl">
