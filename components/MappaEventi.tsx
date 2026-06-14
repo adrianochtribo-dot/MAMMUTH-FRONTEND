@@ -54,6 +54,7 @@ export default function MappaEventi() {
   const [filters, setFilters] = useState<ActiveFilters>({ macro: [], sub: [] })
   const [filtroGratuito, setFiltroGratuito] = useState<boolean>(false)
   const [filtroTesto, setFiltroTesto] = useState<string>('')
+  const [ricercaAttiva, setRicercaAttiva] = useState<boolean>(false)
   const [eventoSelezionato, setEventoSelezionato] = useState<Evento | null>(null)
   const [mapReady, setMapReady] = useState(false)
 
@@ -75,6 +76,40 @@ export default function MappaEventi() {
     })
     return counts
   }, [eventi])
+
+  // Luoghi unici presenti nel dataset (frazioni, borghi, indirizzi -
+  // qualsiasi cosa sia nel campo `luogo`). Derivati dai dati reali,
+  // nessun valore inventato: oggi sono tutte le frazioni/borgate di
+  // Sermoneta presenti nei 40 eventi del pilot.
+  const luoghiUnici = useMemo(() => {
+    const set = new Set<string>()
+    eventi.forEach((ev) => {
+      if (ev.luogo) set.add(ev.luogo)
+    })
+    return Array.from(set).sort()
+  }, [eventi])
+
+  // Suggerimenti "Eventi": solo se l'utente ha digitato qualcosa,
+  // match sul titolo (stessa logica del filtro principale).
+  const suggerimentiEventi = useMemo(() => {
+    const q = filtroTesto.trim().toLowerCase()
+    if (!q) return []
+    return eventi
+      .filter((ev) => ev.titolo?.toLowerCase().includes(q))
+      .slice(0, 5)
+  }, [eventi, filtroTesto])
+
+  // Suggerimenti "Luoghi": se il campo è vuoto, mostra i luoghi
+  // disponibili (scoperta, come le destinazioni popolari di Airbnb a
+  // focus vuoto); se c'è testo, filtra per match.
+  const suggerimentiLuoghi = useMemo(() => {
+    const q = filtroTesto.trim().toLowerCase()
+    const list = q ? luoghiUnici.filter((l) => l.toLowerCase().includes(q)) : luoghiUnici
+    return list.slice(0, 6)
+  }, [luoghiUnici, filtroTesto])
+
+  const mostraSuggerimenti =
+    ricercaAttiva && (suggerimentiEventi.length > 0 || suggerimentiLuoghi.length > 0)
 
   const aggiornaMarker = useCallback((eventiDaMostrare: Evento[]) => {
     const L = leafletRef.current
@@ -227,22 +262,159 @@ export default function MappaEventi() {
     <div style={{ position: 'relative' }}>
       {/* RICERCA TESTUALE */}
       <div style={{ marginBottom: '16px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
-        <input
-          type="text"
-          placeholder="🔍 Cerca evento o luogo..."
-          value={filtroTesto}
-          onChange={(e) => setFiltroTesto(e.target.value)}
-          style={{
-            width: '100%',
-            padding: '10px 16px',
-            borderRadius: '12px',
-            border: '1px solid rgba(0,0,0,0.1)',
-            fontSize: '14px',
-            background: 'white',
-            outline: 'none',
-            boxSizing: 'border-box',
-          }}
-        />
+        <div style={{ position: 'relative' }}>
+          <input
+            type="text"
+            placeholder="🔍 Cerca evento, frazione o luogo..."
+            value={filtroTesto}
+            onChange={(e) => setFiltroTesto(e.target.value)}
+            onFocus={() => setRicercaAttiva(true)}
+            onBlur={() => setTimeout(() => setRicercaAttiva(false), 120)}
+            style={{
+              width: '100%',
+              padding: '10px 36px 10px 16px',
+              borderRadius: '12px',
+              border: '1px solid rgba(0,0,0,0.1)',
+              fontSize: '14px',
+              background: 'white',
+              outline: 'none',
+              boxSizing: 'border-box',
+            }}
+          />
+          {filtroTesto && (
+            <button
+              onClick={() => setFiltroTesto('')}
+              aria-label="Cancella ricerca"
+              style={{
+                position: 'absolute',
+                right: '10px',
+                top: '50%',
+                transform: 'translateY(-50%)',
+                border: 'none',
+                background: 'rgba(0,0,0,0.06)',
+                color: 'rgba(29,29,31,0.5)',
+                borderRadius: '50%',
+                width: '20px',
+                height: '20px',
+                fontSize: '12px',
+                lineHeight: '20px',
+                cursor: 'pointer',
+                padding: 0,
+              }}
+            >
+              ✕
+            </button>
+          )}
+
+          {mostraSuggerimenti && (
+            <div
+              style={{
+                position: 'absolute',
+                top: 'calc(100% + 4px)',
+                left: 0,
+                right: 0,
+                background: 'white',
+                borderRadius: '12px',
+                border: '1px solid rgba(0,0,0,0.08)',
+                boxShadow: '0 8px 24px rgba(0,0,0,0.12)',
+                zIndex: 1100,
+                maxHeight: '280px',
+                overflowY: 'auto',
+                padding: '6px',
+              }}
+            >
+              {suggerimentiEventi.length > 0 && (
+                <>
+                  <div style={{ fontSize: '11px', fontWeight: 600, color: 'rgba(29,29,31,0.4)', padding: '6px 10px 2px', letterSpacing: '0.05em' }}>
+                    EVENTI
+                  </div>
+                  {suggerimentiEventi.map((ev) => (
+                    <div
+                      key={`sugg-ev-${ev.id}`}
+                      onClick={() => {
+                        setEventoSelezionato(ev)
+                        setFiltroTesto('')
+                        setRicercaAttiva(false)
+                      }}
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '8px',
+                        padding: '8px 10px',
+                        borderRadius: '8px',
+                        cursor: 'pointer',
+                      }}
+                      onMouseEnter={(e) => (e.currentTarget.style.background = 'rgba(0,0,0,0.04)')}
+                      onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
+                    >
+                      <div
+                        style={{
+                          width: '8px',
+                          height: '8px',
+                          borderRadius: '50%',
+                          background: getColore(ev.categoria),
+                          flexShrink: 0,
+                        }}
+                      />
+                      <div
+                        style={{
+                          fontSize: '13px',
+                          fontWeight: 500,
+                          color: '#1D1D1F',
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis',
+                          whiteSpace: 'nowrap',
+                        }}
+                      >
+                        {ev.titolo}
+                      </div>
+                    </div>
+                  ))}
+                </>
+              )}
+
+              {suggerimentiLuoghi.length > 0 && (
+                <>
+                  <div style={{ fontSize: '11px', fontWeight: 600, color: 'rgba(29,29,31,0.4)', padding: '6px 10px 2px', letterSpacing: '0.05em' }}>
+                    LUOGHI
+                  </div>
+                  {suggerimentiLuoghi.map((luogo, i) => (
+                    <div
+                      key={`sugg-luogo-${i}`}
+                      onClick={() => {
+                        setFiltroTesto(luogo)
+                        setRicercaAttiva(false)
+                      }}
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '8px',
+                        padding: '8px 10px',
+                        borderRadius: '8px',
+                        cursor: 'pointer',
+                      }}
+                      onMouseEnter={(e) => (e.currentTarget.style.background = 'rgba(0,0,0,0.04)')}
+                      onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
+                    >
+                      <span style={{ fontSize: '14px' }}>📍</span>
+                      <div
+                        style={{
+                          fontSize: '13px',
+                          color: '#1D1D1F',
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis',
+                          whiteSpace: 'nowrap',
+                        }}
+                      >
+                        {luogo}
+                      </div>
+                    </div>
+                  ))}
+                </>
+              )}
+            </div>
+          )}
+        </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
           <button
             onClick={() => setFiltroGratuito(!filtroGratuito)}
