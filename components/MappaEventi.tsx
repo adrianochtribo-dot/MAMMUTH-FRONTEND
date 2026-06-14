@@ -29,6 +29,81 @@ function jitter(lat: number, lng: number, index: number): [number, number] {
   return [lat + Math.cos(angle) * radius, lng + Math.sin(angle) * radius]
 }
 
+// --- METEO & ABBIGLIAMENTO ---
+// Mappatura codici WMO (Open-Meteo) -> emoji/descrizione, sottoinsieme
+// dei codici piu' comuni in Italia centrale.
+function getMeteoIcona(code: number): string {
+  if (code === 0) return '☀️'
+  if (code === 1 || code === 2) return '🌤️'
+  if (code === 3) return '☁️'
+  if (code === 45 || code === 48) return '🌫️'
+  if (code >= 51 && code <= 57) return '🌦️'
+  if (code >= 61 && code <= 67) return '🌧️'
+  if (code >= 71 && code <= 77) return '🌨️'
+  if (code >= 80 && code <= 82) return '🌧️'
+  if (code >= 95) return '⛈️'
+  return '🌡️'
+}
+
+function getMeteoDescrizione(code: number): string {
+  if (code === 0) return 'Cielo sereno'
+  if (code === 1 || code === 2) return 'Poco nuvoloso'
+  if (code === 3) return 'Nuvoloso'
+  if (code === 45 || code === 48) return 'Nebbia'
+  if (code >= 51 && code <= 57) return 'Pioggia leggera'
+  if (code >= 61 && code <= 67) return 'Pioggia'
+  if (code >= 71 && code <= 77) return 'Neve'
+  if (code >= 80 && code <= 82) return 'Rovesci'
+  if (code >= 95) return 'Temporale'
+  return 'Variabile'
+}
+
+// Consiglio abbigliamento da previsione reale (temperature + probabilita' pioggia)
+function getConsiglioAbbigliamento(tempMax: number, precipProb: number): string {
+  let base = ''
+  if (tempMax >= 28) base = 'Abbigliamento leggero, cappello e protezione solare'
+  else if (tempMax >= 22) base = 'Abbigliamento leggero, qualcosa per la sera'
+  else if (tempMax >= 15) base = 'Vestiti a strati, giacca leggera'
+  else if (tempMax >= 8) base = 'Giacca, maglione, strati'
+  else base = 'Giacca pesante, sciarpa e guanti'
+
+  if (precipProb >= 50) base += ' — possibile pioggia, porta un ombrello'
+  return base
+}
+
+// Indicazione stagionale generica per Sermoneta/Lazio, basata sul mese
+// dell'evento (0=gennaio ... 11=dicembre). Usata solo per eventi oltre
+// 14 giorni, quando una previsione reale non esiste ancora: e' una media
+// climatica nota, non una previsione - dichiarata come tale in UI.
+function getIndicazioneStagionale(mese: number): { emoji: string; testo: string; abbigliamento: string } {
+  if (mese === 11 || mese === 0 || mese === 1) {
+    return {
+      emoji: '❄️',
+      testo: 'Inverno a Sermoneta: clima freddo, possibili piogge (in genere 2–12°C)',
+      abbigliamento: 'Giacca pesante, strati, sciarpa',
+    }
+  }
+  if (mese >= 2 && mese <= 4) {
+    return {
+      emoji: '🌦️',
+      testo: 'Primavera a Sermoneta: clima mite e variabile (in genere 10–20°C)',
+      abbigliamento: 'Vestiti a strati, giacca leggera, occhio alla pioggia',
+    }
+  }
+  if (mese >= 5 && mese <= 7) {
+    return {
+      emoji: '☀️',
+      testo: 'Estate a Sermoneta: clima caldo e secco (in genere 20–32°C)',
+      abbigliamento: 'Abbigliamento leggero, cappello, acqua',
+    }
+  }
+  return {
+    emoji: '🍂',
+    testo: 'Autunno a Sermoneta: clima mite con possibili piogge (in genere 12–22°C)',
+    abbigliamento: 'Vestiti a strati, giacca leggera, ombrello',
+  }
+}
+
 interface Evento {
   id: number
   titolo: string
@@ -57,6 +132,9 @@ export default function MappaEventi() {
   const [ricercaAttiva, setRicercaAttiva] = useState<boolean>(false)
   const [eventoSelezionato, setEventoSelezionato] = useState<Evento | null>(null)
   const [mapReady, setMapReady] = useState(false)
+  const [meteo, setMeteo] = useState<{ tempMax: number; tempMin: number; precipProb: number; weathercode: number } | null>(null)
+  const [meteoLoading, setMeteoLoading] = useState(false)
+  const [meteoError, setMeteoError] = useState(false)
 
   const eventiFiltrati = useFilteredEvents(eventi, filters).filter((ev) => {
     if (filtroGratuito && !ev.gratuito) return false
@@ -241,6 +319,48 @@ export default function MappaEventi() {
     }
   }, [eventiFiltrati, aggiornaMarker, mapReady])
 
+  // Meteo/abbigliamento per l'evento selezionato: previsione reale
+  // (Open-Meteo, gratuito, no API key) solo se l'evento e' entro 14 giorni
+  // E ha coordinate. Altrimenti nessuna chiamata: in render si mostra la
+  // nota stagionale generica (vedi getIndicazioneStagionale).
+  useEffect(() => {
+    setMeteo(null)
+    setMeteoError(false)
+
+    if (!eventoSelezionato?.data_inizio) return
+    if (!eventoSelezionato.lat || !eventoSelezionato.lng) return
+
+    const oggiMs = new Date().setHours(0, 0, 0, 0)
+    const eventoMs = new Date(eventoSelezionato.data_inizio).setHours(0, 0, 0, 0)
+    const giorni = Math.round((eventoMs - oggiMs) / 86400000)
+    if (giorni < 0 || giorni > 14) return
+
+    const dataStr = new Date(eventoSelezionato.data_inizio).toISOString().slice(0, 10)
+    setMeteoLoading(true)
+
+    fetch(
+      `https://api.open-meteo.com/v1/forecast?latitude=${eventoSelezionato.lat}&longitude=${eventoSelezionato.lng}&daily=temperature_2m_max,temperature_2m_min,precipitation_probability_max,weathercode&timezone=Europe%2FRome&start_date=${dataStr}&end_date=${dataStr}`
+    )
+      .then((res) => {
+        if (!res.ok) throw new Error('meteo non disponibile')
+        return res.json()
+      })
+      .then((data) => {
+        if (data?.daily?.temperature_2m_max?.length) {
+          setMeteo({
+            tempMax: data.daily.temperature_2m_max[0],
+            tempMin: data.daily.temperature_2m_min[0],
+            precipProb: data.daily.precipitation_probability_max[0],
+            weathercode: data.daily.weathercode[0],
+          })
+        } else {
+          setMeteoError(true)
+        }
+      })
+      .catch(() => setMeteoError(true))
+      .finally(() => setMeteoLoading(false))
+  }, [eventoSelezionato])
+
   if (error) return <div style={{ color: '#E74C3C', padding: '16px' }}>{error}</div>
 
   const coloreSelezionato = eventoSelezionato ? getColore(eventoSelezionato.categoria) : '#8B7CF6'
@@ -257,6 +377,13 @@ export default function MappaEventi() {
     : eventoSelezionato?.prezzo_min
     ? `Da €${eventoSelezionato.prezzo_min}`
     : 'Vedi dettagli'
+
+  const giorniAEvento = eventoSelezionato?.data_inizio
+    ? Math.round(
+        (new Date(eventoSelezionato.data_inizio).setHours(0, 0, 0, 0) - new Date().setHours(0, 0, 0, 0)) /
+          86400000
+      )
+    : null
 
   return (
     <div style={{ position: 'relative' }}>
@@ -618,6 +745,51 @@ export default function MappaEventi() {
               <div style={{ fontSize: '14px', color: 'rgba(29,29,31,0.6)' }}>🗓 {dataFormattata}</div>
               <div style={{ fontSize: '14px', fontWeight: 600, color: coloreSelezionato }}>🎟 {ingresso}</div>
             </div>
+
+            {/* METEO & ABBIGLIAMENTO — solo per eventi non passati */}
+            {giorniAEvento !== null && giorniAEvento >= 0 && (() => {
+              // Caso 1: entro 14 giorni e coordinate disponibili -> previsione reale
+              if (giorniAEvento <= 14 && eventoSelezionato.lat && eventoSelezionato.lng && !meteoError) {
+                if (meteoLoading || !meteo) {
+                  return (
+                    <div style={{ borderRadius: '12px', background: 'rgba(0,0,0,0.04)', padding: '12px 14px', marginBottom: '20px', fontSize: '13px', color: 'rgba(29,29,31,0.5)' }}>
+                      ⏳ Carico previsioni meteo...
+                    </div>
+                  )
+                }
+                const icona = getMeteoIcona(meteo.weathercode)
+                const descr = getMeteoDescrizione(meteo.weathercode)
+                const consiglio = getConsiglioAbbigliamento(meteo.tempMax, meteo.precipProb)
+                return (
+                  <div style={{ borderRadius: '12px', background: 'rgba(0,0,0,0.04)', padding: '12px 14px', marginBottom: '20px' }}>
+                    <div style={{ fontSize: '14px', fontWeight: 600, color: '#1D1D1F', marginBottom: '6px' }}>
+                      {icona} {descr} · {Math.round(meteo.tempMin)}°/{Math.round(meteo.tempMax)}°C
+                      {meteo.precipProb >= 30 ? ` · 💧 ${meteo.precipProb}%` : ''}
+                    </div>
+                    <div style={{ fontSize: '13px', color: 'rgba(29,29,31,0.65)' }}>👕 {consiglio}</div>
+                    <div style={{ fontSize: '10px', color: 'rgba(29,29,31,0.35)', marginTop: '6px' }}>
+                      Previsione Open-Meteo per il giorno dell'evento
+                    </div>
+                  </div>
+                )
+              }
+
+              // Caso 2: oltre 14 giorni (o senza coordinate) -> indicazione stagionale generica
+              const dataEvento = new Date(eventoSelezionato.data_inizio)
+              const stagione = getIndicazioneStagionale(dataEvento.getMonth())
+              return (
+                <div style={{ borderRadius: '12px', background: 'rgba(0,0,0,0.04)', padding: '12px 14px', marginBottom: '20px' }}>
+                  <div style={{ fontSize: '14px', fontWeight: 600, color: '#1D1D1F', marginBottom: '6px' }}>
+                    {stagione.emoji} {stagione.testo}
+                  </div>
+                  <div style={{ fontSize: '13px', color: 'rgba(29,29,31,0.65)' }}>👕 {stagione.abbigliamento}</div>
+                  <div style={{ fontSize: '10px', color: 'rgba(29,29,31,0.35)', marginTop: '6px' }}>
+                    Indicazione stagionale generica — previsione meteo reale disponibile da 14 giorni prima dell'evento
+                  </div>
+                </div>
+              )
+            })()}
+
             {eventoSelezionato.descrizione && (
               <p style={{ fontSize: '14px', lineHeight: 1.6, color: 'rgba(29,29,31,0.7)', marginBottom: '24px' }}>
                 {eventoSelezionato.descrizione}
