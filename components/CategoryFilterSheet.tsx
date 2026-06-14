@@ -190,17 +190,25 @@ interface CategoryFilterSheetProps {
   activeFilters: ActiveFilters;
   onChange: (filters: ActiveFilters) => void;
   resultCount?: number;
+  categoryCounts?: Record<string, number>;
 }
 
 export default function CategoryFilterSheet({
   activeFilters,
   onChange,
   resultCount,
+  categoryCounts = {},
 }: CategoryFilterSheetProps) {
   const [open, setOpen] = useState(false);
   const [expandedMacro, setExpandedMacro] = useState<string | null>(null);
 
   const totalActive = activeFilters.macro.length + activeFilters.sub.length;
+
+  const sortedCategories = useMemo(() => {
+    return [...CATEGORIES].sort(
+      (a, b) => (categoryCounts[b.id] ?? 0) - (categoryCounts[a.id] ?? 0)
+    );
+  }, [categoryCounts]);
 
   const toggleMacro = (id: string) => {
     const isActive = activeFilters.macro.includes(id);
@@ -273,14 +281,14 @@ export default function CategoryFilterSheet({
           {/* Overlay leggero: la mappa resta visibile e leggibile dietro */}
           <Drawer.Overlay className="fixed inset-0 z-40 bg-black/10 backdrop-blur-[2px]" />
           <Drawer.Content
-            className="fixed inset-x-0 bottom-0 z-50 flex max-h-[60vh]
+            className="fixed inset-x-0 bottom-0 z-50 flex max-h-[75vh]
                        flex-col rounded-t-2xl
                        bg-white/70 backdrop-blur-2xl backdrop-saturate-150
                        border border-white/40 border-b-0
                        shadow-[0_-8px_40px_rgba(0,0,0,0.12)]
                        sm:left-1/2 sm:right-auto sm:top-auto sm:bottom-6
                        sm:-translate-x-1/2 sm:w-[420px]
-                       sm:max-h-[500px] sm:rounded-2xl sm:border-b"
+                       sm:max-h-[600px] sm:rounded-2xl sm:border-b"
           >
             <div className="mx-auto mt-2.5 h-1 w-9 rounded-full bg-black/15 sm:hidden" />
 
@@ -310,63 +318,69 @@ export default function CategoryFilterSheet({
               </p>
             )}
 
-            <div className="flex-1 overflow-y-auto">
-              {CATEGORIES.map((cat, idx) => {
+            <div className="flex-1 overflow-y-auto px-3 pb-2 space-y-1.5">
+              {sortedCategories.map((cat) => {
                 const Icon = cat.icon;
+                const count = categoryCounts[cat.id] ?? 0;
                 const isActive = activeFilters.macro.includes(cat.id);
                 const isExpanded = expandedMacro === cat.id;
                 const activeSubCount = cat.subcategories.filter((s) =>
                   activeFilters.sub.includes(s.id)
                 ).length;
+                const hasSelection = isActive || activeSubCount > 0;
 
                 return (
                   <div key={cat.id}>
-                    <button
-                      onClick={() => toggleExpand(cat.id)}
-                      className="flex w-full items-center gap-3 px-5 py-3
-                                 text-left active:bg-white/30 transition-colors"
+                    <div
+                      style={{ backgroundColor: cat.color }}
+                      className={`flex items-center gap-3 rounded-2xl px-4 py-3
+                                  transition-transform active:scale-[0.98]
+                                  ${hasSelection ? 'ring-2 ring-[#1D1D1F]/15' : ''}`}
                     >
-                      <div
-                        style={{ backgroundColor: cat.glow }}
-                        className="flex h-8 w-8 shrink-0 items-center justify-center rounded-[9px] shadow-sm"
+                      <button
+                        onClick={() => toggleExpand(cat.id)}
+                        className="flex flex-1 items-center gap-3 text-left"
                       >
-                        <Icon size={17} strokeWidth={2.2} color="#FFFFFF" />
-                      </div>
-
-                      <span className="flex-1 text-[15px] text-[#1D1D1F]">
-                        {cat.label}
-                      </span>
-
-                      {(isActive || activeSubCount > 0) && (
-                        <span
+                        <div
                           style={{ backgroundColor: cat.glow }}
-                          className="flex h-5 min-w-5 items-center justify-center
-                                     rounded-full px-1.5 text-[11px] font-semibold text-white"
+                          className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full shadow-sm"
                         >
-                          {activeSubCount > 0 ? activeSubCount : '✓'}
+                          <Icon size={19} strokeWidth={2.2} color="#FFFFFF" />
+                        </div>
+
+                        <span className="flex-1 text-[15px] font-semibold text-[#1D1D1F]">
+                          {cat.label}
                         </span>
-                      )}
 
-                      {isExpanded ? (
-                        <ChevronDown size={16} strokeWidth={2.5} className="text-[#8E8E93]" />
-                      ) : (
-                        <ChevronRight size={16} strokeWidth={2.5} className="text-[#8E8E93]" />
-                      )}
-                    </button>
+                        {activeSubCount > 0 && (
+                          <Check size={16} strokeWidth={2.5} color={cat.glow} />
+                        )}
 
-                    {idx < CATEGORIES.length - 1 && (
-                      <div className="ml-5 h-px bg-black/[0.08]" />
-                    )}
+                        <div
+                          style={{ backgroundColor: cat.glow }}
+                          className="flex h-7 min-w-7 items-center justify-center
+                                     rounded-full px-2 text-[13px] font-bold text-white"
+                        >
+                          {count}
+                        </div>
+
+                        {isExpanded ? (
+                          <ChevronDown size={16} strokeWidth={2.5} className="text-[#1D1D1F]/40" />
+                        ) : (
+                          <ChevronRight size={16} strokeWidth={2.5} className="text-[#1D1D1F]/40" />
+                        )}
+                      </button>
+                    </div>
 
                     {isExpanded && (
-                      <div className="bg-white/30">
+                      <div className="mt-1 rounded-2xl bg-white/50 overflow-hidden">
                         {cat.subcategories.map((sub, subIdx) => {
                           const subActive = activeFilters.sub.includes(sub.id);
                           return (
                             <div key={sub.id}>
                               <button
                                 onClick={() => toggleSub(cat.id, sub.id)}
-                                className="flex w-full items-center gap-3 pl-[52px] pr-5 py-2.5
+                                className="flex w-full items-center gap-3 pl-[60px] pr-5 py-2.5
                                            text-left active:bg-white/40 transition-colors"
                               >
                                 <span className="flex-1 text-[14px] text-[#3A3A3C]">
@@ -377,14 +391,11 @@ export default function CategoryFilterSheet({
                                 )}
                               </button>
                               {subIdx < cat.subcategories.length - 1 && (
-                                <div className="ml-[52px] h-px bg-black/[0.08]" />
+                                <div className="ml-[60px] h-px bg-black/[0.06]" />
                               )}
                             </div>
                           );
                         })}
-                        {idx < CATEGORIES.length - 1 && (
-                          <div className="ml-5 h-px bg-black/[0.08]" />
-                        )}
                       </div>
                     )}
                   </div>
