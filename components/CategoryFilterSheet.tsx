@@ -204,14 +204,20 @@ export default function CategoryFilterSheet({
 
   const totalActive = activeFilters.macro.length + activeFilters.sub.length;
 
-  const sorted = useMemo(() => {
-    return [...CATEGORIES].sort(
+  // Triade fissa: identita del progetto (Feste Religiose, Sagre/Enogastronomia,
+  // Palii/Tradizioni), non le prime 3 per conteggio. Le altre 9 (incluse
+  // quelle a 0) vanno nella griglia, ordinate per conteggio.
+  const FEATURED_IDS = ['feste_religiose', 'enogastronomia', 'tradizioni_folklore'];
+
+  const topThree = useMemo(() => {
+    return FEATURED_IDS.map((id) => CATEGORIES.find((c) => c.id === id)!).filter(Boolean);
+  }, []);
+
+  const rest = useMemo(() => {
+    return CATEGORIES.filter((c) => !FEATURED_IDS.includes(c.id)).sort(
       (a, b) => (categoryCounts[b.id] ?? 0) - (categoryCounts[a.id] ?? 0)
     );
   }, [categoryCounts]);
-
-  const topThree = sorted.slice(0, 3);
-  const rest = sorted.slice(3);
 
   const toggleMacro = (id: string) => {
     const isActive = activeFilters.macro.includes(id);
@@ -288,7 +294,7 @@ export default function CategoryFilterSheet({
           <Drawer.Content
             className="fixed inset-x-0 bottom-0 z-50 flex max-h-[85vh]
                        flex-col rounded-t-2xl
-                       bg-white/70 backdrop-blur-2xl backdrop-saturate-150
+                       bg-white/95 backdrop-blur-2xl backdrop-saturate-150
                        border border-white/40 border-b-0
                        shadow-[0_-8px_40px_rgba(0,0,0,0.12)]
                        sm:left-1/2 sm:right-auto sm:top-auto sm:bottom-6
@@ -329,6 +335,7 @@ export default function CategoryFilterSheet({
             </div>
 
             <div className="flex-1 overflow-y-auto px-3 pb-2">
+              {/* 3 BARRE: identità del progetto, rilievo marcato */}
               <div className="space-y-2">
                 {topThree.map((cat) => {
                   const Icon = cat.icon;
@@ -346,7 +353,7 @@ export default function CategoryFilterSheet({
                         onClick={() => toggleMacro(cat.id)}
                         style={{ backgroundColor: cat.color }}
                         className={`flex items-center gap-3 rounded-2xl px-4 py-3.5
-                                    shadow-lg cursor-pointer
+                                    shadow-[0_14px_32px_-8px_rgba(0,0,0,0.28)] cursor-pointer
                                     transition-transform active:scale-[0.98]
                                     ${hasSelection ? 'ring-2 ring-[#1D1D1F]/25' : ''}`}
                       >
@@ -418,6 +425,8 @@ export default function CategoryFilterSheet({
                 })}
               </div>
 
+              {/* GRIGLIA 2 COLONNE: le restanti 9 categorie, sempre visibili
+                  (incluse quelle a 0 eventi - verità territoriale certificata) */}
               <div className="mt-3 grid grid-cols-2 gap-2">
                 {rest.map((cat) => {
                   const Icon = cat.icon;
@@ -434,7 +443,7 @@ export default function CategoryFilterSheet({
                       onClick={() => toggleMacro(cat.id)}
                       style={{ backgroundColor: cat.color }}
                       className={`flex items-center gap-2.5 rounded-2xl px-3 py-3
-                                  shadow-md cursor-pointer
+                                  shadow-[0_8px_20px_-6px_rgba(0,0,0,0.22)] cursor-pointer
                                   transition-transform active:scale-[0.97]
                                   ${count === 0 ? 'opacity-65' : ''}
                                   ${hasSelection ? 'ring-2 ring-[#1D1D1F]/25 opacity-100' : ''}`}
