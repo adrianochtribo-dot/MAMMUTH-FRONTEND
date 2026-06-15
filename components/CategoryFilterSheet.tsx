@@ -230,18 +230,18 @@ const darken = (hex: string, amount: number) => {
 // INTERNE opposte (inset scura in alto a sinistra, inset chiara in basso a
 // destra — convenzione standard "pressed/debossed" con luce da in alto a
 // sinistra) simulano una conca scavata nella superficie, non una sfera che
-// galleggia sopra. Il riempimento e' un radial-gradient leggermente piu'
-// scuro nell'angolo in ombra (basso-destra) per accentuare la profondita'.
+// galleggia sopra. Riempimento piatto (cat.glow): la profondita' e' data
+// solo dalle due ombre inset, con blur stretto (~size*0.13) per restare
+// un "rim" definito invece di un velo diffuso su tutto il cerchio.
 // `size` (px) scala offset/blur dell'ombra in proporzione al cerchio, cosi'
 // l'effetto resta coerente sia sui cerchi grandi (44px) che piccoli (24px).
 const concaveCircle = (color: string, size: number = 40) => {
-  const shadowDark = darken(color, 0.45);
-  const shadowLight = lighten(color, 0.55);
-  const fillDark = darken(color, 0.18);
-  const inset = +(size * 0.09).toFixed(1);
-  const blur = +(size * 0.24).toFixed(1);
+  const shadowDark = darken(color, 0.5);
+  const shadowLight = lighten(color, 0.65);
+  const inset = +(size * 0.1).toFixed(1);
+  const blur = +(size * 0.13).toFixed(1);
   return {
-    background: `radial-gradient(circle at 68% 68%, ${fillDark} 0%, ${color} 70%)`,
+    background: color,
     boxShadow: `inset ${inset}px ${inset}px ${blur}px ${shadowDark}, inset -${inset}px -${inset}px ${blur}px ${shadowLight}`,
   };
 };
