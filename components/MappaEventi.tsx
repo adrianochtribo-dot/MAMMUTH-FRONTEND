@@ -458,6 +458,7 @@ export default function MappaEventi() {
                   {suggerimentiEventi.map((ev) => (
                     <div
                       key={`sugg-ev-${ev.id}`}
+                      onMouseDown={(e) => e.preventDefault()}
                       onClick={() => {
                         setEventoSelezionato(ev)
                         setFiltroTesto('')
@@ -508,6 +509,7 @@ export default function MappaEventi() {
                   {suggerimentiLuoghi.map((luogo, i) => (
                     <div
                       key={`sugg-luogo-${i}`}
+                      onMouseDown={(e) => e.preventDefault()}
                       onClick={() => {
                         // Se in questo luogo c'è un solo evento, vai
                         // direttamente alla sua scheda (come per "EVENTI").
