@@ -204,9 +204,9 @@ interface CategoryFilterSheetProps {
   categoryCounts?: Record<string, number>;
 }
 
-// Schiarisce un colore hex (#RRGGBB) miscelandolo con bianco in proporzione
-// `amount` (0-1). Usato per generare lo stop "chiaro" del riflesso in alto
-// a partire dal colore base (cat.glow).
+// Schiarisce/scurisce un colore hex (#RRGGBB) miscelandolo con bianco/nero
+// in proporzione `amount` (0-1). lighten() per il riflesso in alto,
+// darken() per l'anello scuro sul bordo del cerchio.
 const lighten = (hex: string, amount: number) => {
   const num = parseInt(hex.replace('#', ''), 16);
   const r = (num >> 16) & 0xff;
@@ -216,21 +216,31 @@ const lighten = (hex: string, amount: number) => {
   return `rgb(${mix(r)}, ${mix(g)}, ${mix(b)})`;
 };
 
-// Stile "glossy" calibrato sui pixel campionati da _Control.png — badge
-// verde "5" e arancio "12" di Taaks, 4 quadranti ciascuno: in ENTRAMBI il
-// pattern e' un gradiente DIAGONALE 135deg, chiaro in alto-sinistra ->
-// colore base in basso-destra, con un riflesso di ~+20% verso il bianco
-// (verde #61DD94->#3AD579, arancio #F4AD70->#F0A165, entrambi ~18-20% su
-// tutti i canali). Ombra esterna nella stessa tonalita' del cerchio
-// (misurata sotto il badge verde: ~#48A77F, non grigia), offset in basso
-// a destra, per l'effetto "galleggia sulla card".
-// `size` (px) scala offset/blur dell'ombra in proporzione al cerchio.
+const darken = (hex: string, amount: number) => {
+  const num = parseInt(hex.replace('#', ''), 16);
+  const r = (num >> 16) & 0xff;
+  const g = (num >> 8) & 0xff;
+  const b = num & 0xff;
+  const mix = (c: number) => Math.round(c * (1 - amount));
+  return `rgb(${mix(r)}, ${mix(g)}, ${mix(b)})`;
+};
+
+// Cerchio con: (1) gradiente diagonale 135deg chiaro->cat.glow (riflesso
+// +35%), (2) anello (border) di 2-3px in una tonalita' scura dello stesso
+// colore, che parte ESATTAMENTE dal bordo del cerchio — visibile come
+// linea netta indipendentemente da quanto il gradiente interno risulti
+// compresso/sottile a schermo, (3) ombra esterna colorata per l'effetto
+// "galleggia sulla card".
+// `size` (px) scala anello/offset/blur in proporzione al cerchio.
 const iconCircle = (color: string, size: number = 40) => {
   const highlight = lighten(color, 0.35);
+  const ringColor = darken(color, 0.4);
+  const ringWidth = Math.max(2, Math.round(size * 0.06));
   const offsetY = +(size * 0.07).toFixed(1);
   const blur = +(size * 0.22).toFixed(1);
   return {
     background: `linear-gradient(135deg, ${highlight} 0%, ${color} 100%)`,
+    border: `${ringWidth}px solid ${ringColor}`,
     boxShadow: `0 ${offsetY}px ${blur}px ${color}66`,
   };
 };
