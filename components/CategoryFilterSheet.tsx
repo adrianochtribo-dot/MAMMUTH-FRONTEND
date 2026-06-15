@@ -220,6 +220,9 @@ const glossyCircle = (color: string, size: number = 40) => {
       `inset ${offset}px ${offset}px ${blur}px rgba(0,0,0,0.45), ` +
       `inset -${offset}px -${offset}px ${blur}px rgba(255,255,255,0.55), ` +
       `0 1px 2px rgba(0,0,0,0.15)`,
+    // TEMP DEBUG: bordo rosso per verificare che questo CSS sia
+    // effettivamente live sul browser. Da rimuovere al prossimo commit.
+    border: '3px solid #FF0000',
   };
 };
 
