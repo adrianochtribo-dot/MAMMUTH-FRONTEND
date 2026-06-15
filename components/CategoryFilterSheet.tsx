@@ -336,11 +336,21 @@ export default function CategoryFilterSheet({
 
       <Drawer.Root open={open} onOpenChange={setOpen}>
         <Drawer.Portal>
-          <Drawer.Overlay className="fixed inset-0 z-40 bg-black/10 backdrop-blur-[2px]" />
+          <Drawer.Overlay
+            className="fixed inset-0 z-40 backdrop-blur-[2px]"
+            style={{
+              background:
+                'radial-gradient(circle at 12% 8%,  #FCEBE3 0%, transparent 45%),' +
+                'radial-gradient(circle at 88% 15%, #87AAC6 0%, transparent 50%),' +
+                'radial-gradient(circle at 75% 55%, #456D91 0%, transparent 55%),' +
+                'radial-gradient(circle at 25% 92%, #C2D0DD 0%, transparent 45%),' +
+                'rgba(0,0,0,0.10)',
+            }}
+          />
           <Drawer.Content
             className="fixed inset-x-0 bottom-0 z-50 flex max-h-[85vh]
                        flex-col rounded-t-2xl
-                       bg-white/95 backdrop-blur-2xl backdrop-saturate-150
+                       bg-white/75 backdrop-blur-2xl backdrop-saturate-150
                        border border-white/40 border-b-0
                        shadow-[0_-8px_40px_rgba(0,0,0,0.12)]
                        sm:left-1/2 sm:right-auto sm:top-auto sm:bottom-6
