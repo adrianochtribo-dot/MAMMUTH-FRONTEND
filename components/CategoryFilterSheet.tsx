@@ -204,6 +204,16 @@ interface CategoryFilterSheetProps {
   categoryCounts?: Record<string, number>;
 }
 
+// Stile "3D glossy" per i cerchi icona e i badge conteggio: overlay radiale
+// chiaro in alto a sinistra (riflesso) + ombra interna in basso (curvatura
+// della sfera) + ombra esterna (elevazione/profondità). Funziona con
+// qualsiasi colore base (cat.glow), senza calcolare varianti chiare/scure.
+const glossyCircle = (color: string) => ({
+  background: `radial-gradient(circle at 32% 28%, rgba(255,255,255,0.65), rgba(255,255,255,0) 58%), ${color}`,
+  boxShadow:
+    'inset 0 -3px 5px rgba(0,0,0,0.28), inset 0 2px 3px rgba(255,255,255,0.45), 0 3px 6px rgba(0,0,0,0.25)',
+});
+
 export default function CategoryFilterSheet({
   activeFilters,
   onChange,
@@ -369,8 +379,8 @@ export default function CategoryFilterSheet({
                                     ${hasSelection ? 'ring-2 ring-[#1D1D1F]/25' : ''}`}
                       >
                         <div
-                          style={{ backgroundColor: cat.glow }}
-                          className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full shadow-md"
+                          style={glossyCircle(cat.glow)}
+                          className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full"
                         >
                           <Icon size={21} strokeWidth={2.2} color="#FFFFFF" />
                         </div>
@@ -384,9 +394,9 @@ export default function CategoryFilterSheet({
                         )}
 
                         <div
-                          style={{ backgroundColor: cat.glow }}
+                          style={glossyCircle(cat.glow)}
                           className="flex h-8 min-w-8 items-center justify-center
-                                     rounded-full px-2.5 text-[14px] font-bold text-white shadow-sm"
+                                     rounded-full px-2.5 text-[14px] font-bold text-white"
                         >
                           {count}
                         </div>
@@ -460,8 +470,8 @@ export default function CategoryFilterSheet({
                                   ${hasSelection ? 'ring-2 ring-[#1D1D1F]/25 opacity-100' : ''}`}
                     >
                       <div
-                        style={{ backgroundColor: cat.glow }}
-                        className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full shadow-sm"
+                        style={glossyCircle(cat.glow)}
+                        className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full"
                       >
                         <Icon size={16} strokeWidth={2.2} color="#FFFFFF" />
                       </div>
@@ -469,7 +479,7 @@ export default function CategoryFilterSheet({
                         {cat.label}
                       </span>
                       <div
-                        style={{ backgroundColor: cat.glow }}
+                        style={glossyCircle(cat.glow)}
                         className="flex h-6 min-w-6 items-center justify-center
                                    rounded-full px-1.5 text-[12px] font-bold text-white"
                       >
