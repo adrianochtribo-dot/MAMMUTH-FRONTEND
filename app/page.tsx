@@ -123,6 +123,7 @@ export default function Home() {
       {/* FOOTER */}
       <footer className="border-t py-12 text-center text-xs" style={{borderColor:'rgba(0,0,0,0.08)',color:'rgba(29,29,31,0.4)'}}>
         <p className="mb-2">MAMMUTH™ — KREATIO UNIVERSAL SYSTEM™ Code 3620</p>
+        <p className="mb-2" style={{color:'rgba(29,29,31,0.3)'}}>KREATIO™ · "Nero Kaelum" — creative studio &amp; pseudonym of Leonardo Adriano Chelariu</p>
         <p className="mb-2">Photo: ©2012 LeonardoAdrianoChelariu — Sermoneta (Latina)</p>
         <p style={{color:'rgba(29,29,31,0.25)'}}>MAMMUTH™ · MAMMUTH•EVENTS™ are trademarks of Leonardo Adriano Chelariu. All rights reserved.</p>
       </footer>
