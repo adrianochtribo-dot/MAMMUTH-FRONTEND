@@ -210,19 +210,16 @@ interface CategoryFilterSheetProps {
 // `size` (px) scala l'offset/blur dell'ombra in proporzione al cerchio,
 // cosi' l'effetto resta coerente sia sui cerchi grandi (44px) che piccoli (24px).
 const glossyCircle = (color: string, size: number = 40) => {
-  const offset = Math.max(1.5, +(size * 0.1).toFixed(1));
-  const blur = +(size * 0.28).toFixed(1);
+  const s1 = +(size * 0.05).toFixed(1);
+  const s2 = +(size * 0.18).toFixed(1);
   return {
     background:
-      `linear-gradient(135deg, rgba(0,0,0,0.4) 0%, rgba(0,0,0,0) 45%, ` +
-      `rgba(255,255,255,0) 55%, rgba(255,255,255,0.5) 100%), ${color}`,
+      `radial-gradient(circle at 30% 25%, rgba(255,255,255,0.65) 0%, ` +
+      `rgba(255,255,255,0) 55%), ${color}`,
     boxShadow:
-      `inset ${offset}px ${offset}px ${blur}px rgba(0,0,0,0.45), ` +
-      `inset -${offset}px -${offset}px ${blur}px rgba(255,255,255,0.55), ` +
-      `0 1px 2px rgba(0,0,0,0.15)`,
-    // TEMP DEBUG: bordo rosso per verificare che questo CSS sia
-    // effettivamente live sul browser. Da rimuovere al prossimo commit.
-    border: '3px solid #FF0000',
+      `0 ${s1}px ${s2}px rgba(0,0,0,0.25), ` +
+      `inset 0 -${s1}px ${s2}px rgba(0,0,0,0.2), ` +
+      `inset 0 1px 2px rgba(255,255,255,0.5)`,
   };
 };
 
