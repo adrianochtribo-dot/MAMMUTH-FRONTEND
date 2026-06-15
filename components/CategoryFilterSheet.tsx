@@ -213,7 +213,9 @@ const glossyCircle = (color: string, size: number = 40) => {
   const offset = Math.max(1.5, +(size * 0.1).toFixed(1));
   const blur = +(size * 0.28).toFixed(1);
   return {
-    backgroundColor: color,
+    background:
+      `linear-gradient(135deg, rgba(0,0,0,0.4) 0%, rgba(0,0,0,0) 45%, ` +
+      `rgba(255,255,255,0) 55%, rgba(255,255,255,0.5) 100%), ${color}`,
     boxShadow:
       `inset ${offset}px ${offset}px ${blur}px rgba(0,0,0,0.45), ` +
       `inset -${offset}px -${offset}px ${blur}px rgba(255,255,255,0.55), ` +
