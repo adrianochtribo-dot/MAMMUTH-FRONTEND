@@ -226,7 +226,7 @@ const lighten = (hex: string, amount: number) => {
 // a destra, per l'effetto "galleggia sulla card".
 // `size` (px) scala offset/blur dell'ombra in proporzione al cerchio.
 const iconCircle = (color: string, size: number = 40) => {
-  const highlight = lighten(color, 0.2);
+  const highlight = lighten(color, 0.35);
   const offsetY = +(size * 0.07).toFixed(1);
   const blur = +(size * 0.22).toFixed(1);
   return {
