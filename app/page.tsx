@@ -91,8 +91,17 @@ export default function Home() {
 
       {/* BENTO GRID */}
       <section id="architettura" className="max-w-5xl mx-auto px-6 py-16">
-        <h2 className="text-3xl font-semibold tracking-tight mb-2" style={{color:'#1D1D1F'}}>Architettura</h2>
-        <p className="text-sm mb-8" style={{color:'rgba(29,29,31,0.5)'}}>KREATIO UNIVERSAL SYSTEM™ — Code 3620</p>
+        <div className="flex items-start justify-between gap-6 mb-8 flex-wrap">
+          <div>
+            <h2 className="text-3xl font-semibold tracking-tight mb-2" style={{color:'#1D1D1F'}}>Architettura</h2>
+            <p className="text-sm" style={{color:'rgba(29,29,31,0.5)'}}>KREATIO UNIVERSAL SYSTEM™ — Code 3620</p>
+          </div>
+          <img
+            src="/kreatio-badge.png"
+            alt="Created by KREATIO — Dove le Idee prendono forma — Nero Kaelum"
+            className="w-20 h-20 md:w-28 md:h-28 flex-shrink-0"
+          />
+        </div>
         <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
           {[
             { label: 'Safety Engine', value: 'v1.0.0', desc: 'Fruin LoS + Cosine Similarity storica', accent: '#8B7CF6' },
