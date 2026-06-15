@@ -204,15 +204,21 @@ interface CategoryFilterSheetProps {
   categoryCounts?: Record<string, number>;
 }
 
-// Stile "3D glossy" per i cerchi icona e i badge conteggio: overlay radiale
-// chiaro in alto a sinistra (riflesso) + ombra interna in basso (curvatura
-// della sfera) + ombra esterna (elevazione/profondità). Funziona con
-// qualsiasi colore base (cat.glow), senza calcolare varianti chiare/scure.
-const glossyCircle = (color: string) => ({
-  background: `radial-gradient(circle at 32% 28%, rgba(255,255,255,0.65), rgba(255,255,255,0) 58%), ${color}`,
-  boxShadow:
-    'inset 0 -3px 5px rgba(0,0,0,0.28), inset 0 2px 3px rgba(255,255,255,0.45), 0 3px 6px rgba(0,0,0,0.25)',
-});
+// Stile "3D concavo" per i cerchi icona e i badge conteggio: due ombre
+// interne opposte (scura in alto a sinistra, chiara in basso a destra)
+// simulano una conca scavata nella superficie, illuminata da in alto.
+// `size` (px) scala l'offset/blur dell'ombra in proporzione al cerchio,
+// cosi' l'effetto resta coerente sia sui cerchi grandi (44px) che piccoli (24px).
+const glossyCircle = (color: string, size: number = 40) => {
+  const offset = Math.max(1, +(size * 0.07).toFixed(1));
+  const blur = +(size * 0.16).toFixed(1);
+  return {
+    backgroundColor: color,
+    boxShadow:
+      `inset ${offset}px ${offset}px ${blur}px rgba(0,0,0,0.35), ` +
+      `inset -${offset}px -${offset}px ${blur}px rgba(255,255,255,0.4)`,
+  };
+};
 
 export default function CategoryFilterSheet({
   activeFilters,
@@ -379,7 +385,7 @@ export default function CategoryFilterSheet({
                                     ${hasSelection ? 'ring-2 ring-[#1D1D1F]/25' : ''}`}
                       >
                         <div
-                          style={glossyCircle(cat.glow)}
+                          style={glossyCircle(cat.glow, 44)}
                           className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full"
                         >
                           <Icon size={21} strokeWidth={2.2} color="#FFFFFF" />
@@ -394,7 +400,7 @@ export default function CategoryFilterSheet({
                         )}
 
                         <div
-                          style={glossyCircle(cat.glow)}
+                          style={glossyCircle(cat.glow, 32)}
                           className="flex h-8 min-w-8 items-center justify-center
                                      rounded-full px-2.5 text-[14px] font-bold text-white"
                         >
@@ -470,7 +476,7 @@ export default function CategoryFilterSheet({
                                   ${hasSelection ? 'ring-2 ring-[#1D1D1F]/25 opacity-100' : ''}`}
                     >
                       <div
-                        style={glossyCircle(cat.glow)}
+                        style={glossyCircle(cat.glow, 36)}
                         className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full"
                       >
                         <Icon size={16} strokeWidth={2.2} color="#FFFFFF" />
@@ -479,7 +485,7 @@ export default function CategoryFilterSheet({
                         {cat.label}
                       </span>
                       <div
-                        style={glossyCircle(cat.glow)}
+                        style={glossyCircle(cat.glow, 24)}
                         className="flex h-6 min-w-6 items-center justify-center
                                    rounded-full px-1.5 text-[12px] font-bold text-white"
                       >
