@@ -204,15 +204,10 @@ interface CategoryFilterSheetProps {
   categoryCounts?: Record<string, number>;
 }
 
-// Stile "3D concavo" per i cerchi icona e i badge conteggio: due ombre
-// interne opposte (scura in alto a sinistra, chiara in basso a destra)
-// simulano una conca scavata nella superficie, illuminata da in alto.
-// `size` (px) scala l'offset/blur dell'ombra in proporzione al cerchio,
-// cosi' l'effetto resta coerente sia sui cerchi grandi (44px) che piccoli (24px).
-// Schiarisce un colore hex (#RRGGBB) miscelandolo con bianco in proporzione
-// `amount` (0-1). Usato per generare lo stop "chiaro" del gradiente del
-// cerchio a partire dal colore base (cat.glow), senza dover definire una
-// seconda tonalita' a mano per ogni categoria.
+// Schiarisce/scurisce un colore hex (#RRGGBB) miscelandolo con bianco/nero
+// in proporzione `amount` (0-1). Usati per generare gli stop chiaro/scuro
+// del riempimento e delle ombre interne a partire dal colore base
+// (cat.glow), senza definire a mano una seconda tonalita' per categoria.
 const lighten = (hex: string, amount: number) => {
   const num = parseInt(hex.replace('#', ''), 16);
   const r = (num >> 16) & 0xff;
@@ -222,20 +217,32 @@ const lighten = (hex: string, amount: number) => {
   return `rgb(${mix(r)}, ${mix(g)}, ${mix(b)})`;
 };
 
-// Stile "glossy sfera" dei cerchi icona/badge in Event-Control, calibrato
-// campionando i pixel della reference fornita (es. badge verde "5" del
-// pannello Control: alto-sinistra ~rgb(95,215,145), basso-destra
-// ~rgb(53,211,116)). Gradiente diagonale chiaro->colore-base (135deg),
-// stesso principio applicato a qualsiasi cat.glow tramite lighten().
-// Ombra esterna nella stessa tonalita' (non grigia) per l'effetto
-// "sfera che galleggia" sulla card.
-const glossyCircle = (color: string, size: number = 40) => {
-  const light = lighten(color, 0.4);
-  const offsetY = +(size * 0.07).toFixed(1);
-  const blur = +(size * 0.22).toFixed(1);
+const darken = (hex: string, amount: number) => {
+  const num = parseInt(hex.replace('#', ''), 16);
+  const r = (num >> 16) & 0xff;
+  const g = (num >> 8) & 0xff;
+  const b = num & 0xff;
+  const mix = (c: number) => Math.round(c * (1 - amount));
+  return `rgb(${mix(r)}, ${mix(g)}, ${mix(b)})`;
+};
+
+// Stile "3D concavo" per i cerchi icona e i badge conteggio: due ombre
+// INTERNE opposte (inset scura in alto a sinistra, inset chiara in basso a
+// destra — convenzione standard "pressed/debossed" con luce da in alto a
+// sinistra) simulano una conca scavata nella superficie, non una sfera che
+// galleggia sopra. Il riempimento e' un radial-gradient leggermente piu'
+// scuro nell'angolo in ombra (basso-destra) per accentuare la profondita'.
+// `size` (px) scala offset/blur dell'ombra in proporzione al cerchio, cosi'
+// l'effetto resta coerente sia sui cerchi grandi (44px) che piccoli (24px).
+const concaveCircle = (color: string, size: number = 40) => {
+  const shadowDark = darken(color, 0.45);
+  const shadowLight = lighten(color, 0.55);
+  const fillDark = darken(color, 0.18);
+  const inset = +(size * 0.09).toFixed(1);
+  const blur = +(size * 0.24).toFixed(1);
   return {
-    background: `linear-gradient(135deg, ${light} 0%, ${color} 100%)`,
-    boxShadow: `0 ${offsetY}px ${blur}px ${color}66`,
+    background: `radial-gradient(circle at 68% 68%, ${fillDark} 0%, ${color} 70%)`,
+    boxShadow: `inset ${inset}px ${inset}px ${blur}px ${shadowDark}, inset -${inset}px -${inset}px ${blur}px ${shadowLight}`,
   };
 };
 
@@ -414,7 +421,7 @@ export default function CategoryFilterSheet({
                                     ${hasSelection ? 'ring-2 ring-[#1D1D1F]/25' : ''}`}
                       >
                         <div
-                          style={glossyCircle(cat.glow, 44)}
+                          style={concaveCircle(cat.glow, 44)}
                           className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full"
                         >
                           <Icon size={21} strokeWidth={2.2} color="#FFFFFF" />
@@ -429,7 +436,7 @@ export default function CategoryFilterSheet({
                         )}
 
                         <div
-                          style={glossyCircle(cat.glow, 32)}
+                          style={concaveCircle(cat.glow, 32)}
                           className="flex h-8 min-w-8 items-center justify-center
                                      rounded-full px-2.5 text-[14px] font-bold text-white"
                         >
@@ -505,7 +512,7 @@ export default function CategoryFilterSheet({
                                   ${hasSelection ? 'ring-2 ring-[#1D1D1F]/25 opacity-100' : ''}`}
                     >
                       <div
-                        style={glossyCircle(cat.glow, 36)}
+                        style={concaveCircle(cat.glow, 36)}
                         className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full"
                       >
                         <Icon size={16} strokeWidth={2.2} color="#FFFFFF" />
@@ -514,7 +521,7 @@ export default function CategoryFilterSheet({
                         {cat.label}
                       </span>
                       <div
-                        style={glossyCircle(cat.glow, 24)}
+                        style={concaveCircle(cat.glow, 24)}
                         className="flex h-6 min-w-6 items-center justify-center
                                    rounded-full px-1.5 text-[12px] font-bold text-white"
                       >
