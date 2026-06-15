@@ -216,21 +216,22 @@ const lighten = (hex: string, amount: number) => {
   return `rgb(${mix(r)}, ${mix(g)}, ${mix(b)})`;
 };
 
-// Stile "glossy" calibrato sui pixel campionati dal riferimento _Control.png
-// (badge "5"/"12" della riga Taaks: riflesso ~rgb(92,217,141) in alto vs
-// base ~rgb(60,219,127), rapporto ~+18% verso il bianco). Riflesso chiaro
-// confinato in una fascia nella meta' superiore del cerchio (0-55%), il
-// resto resta a colore pieno cat.glow — niente sfumatura/ombra che invada
-// il centro. Ombra esterna sottile per l'effetto "galleggia sulla card",
-// come nel riferimento.
-// `size` (px) scala blur/offset dell'ombra esterna in proporzione al cerchio.
+// Stile "glossy" calibrato sui pixel campionati da _Control.png — badge
+// verde "5" e arancio "12" di Taaks, 4 quadranti ciascuno: in ENTRAMBI il
+// pattern e' un gradiente DIAGONALE 135deg, chiaro in alto-sinistra ->
+// colore base in basso-destra, con un riflesso di ~+20% verso il bianco
+// (verde #61DD94->#3AD579, arancio #F4AD70->#F0A165, entrambi ~18-20% su
+// tutti i canali). Ombra esterna nella stessa tonalita' del cerchio
+// (misurata sotto il badge verde: ~#48A77F, non grigia), offset in basso
+// a destra, per l'effetto "galleggia sulla card".
+// `size` (px) scala offset/blur dell'ombra in proporzione al cerchio.
 const iconCircle = (color: string, size: number = 40) => {
-  const highlight = lighten(color, 0.18);
-  const blur = +(size * 0.15).toFixed(1);
-  const offsetY = +(size * 0.05).toFixed(1);
+  const highlight = lighten(color, 0.2);
+  const offsetY = +(size * 0.07).toFixed(1);
+  const blur = +(size * 0.22).toFixed(1);
   return {
-    background: `linear-gradient(180deg, ${highlight} 0%, ${color} 55%)`,
-    boxShadow: `0 ${offsetY}px ${blur}px ${color}4D`,
+    background: `linear-gradient(135deg, ${highlight} 0%, ${color} 100%)`,
+    boxShadow: `0 ${offsetY}px ${blur}px ${color}66`,
   };
 };
 
