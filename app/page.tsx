@@ -1,9 +1,20 @@
 import Link from 'next/link'
 import MappaEventi from '@/components/MappaEventi'
+import WidgetTerritorio from '@/components/WidgetTerritorio'
 
 export default function Home() {
   return (
-    <div className="min-h-screen font-sans antialiased overflow-x-hidden" style={{backgroundColor:'#F5F5F7',color:'#1D1D1F'}}>
+    <div style={{display:'flex',minHeight:'100vh',backgroundColor:'#F5F5F7'}}>
+
+      {/* COLONNA SINISTRA — widget verticale stile telefono (primo quarto) */}
+      <div style={{width:'25%',minWidth:'260px',flexShrink:0}} className="hidden md:block">
+        <div style={{position:'sticky',top:0}}>
+          <WidgetTerritorio />
+        </div>
+      </div>
+
+      {/* COLONNA DESTRA — contenuto del sito */}
+      <div className="min-h-screen font-sans antialiased overflow-x-hidden" style={{flex:1,backgroundColor:'#F5F5F7',color:'#1D1D1F'}}>
 
       {/* NAVBAR */}
       <nav className="sticky top-0 z-50 backdrop-blur-md border-b" style={{backgroundColor:'rgba(245,245,247,0.8)',borderColor:'rgba(0,0,0,0.08)'}}>
@@ -12,7 +23,6 @@ export default function Home() {
           <div className="flex gap-6 text-xs" style={{color:'rgba(29,29,31,0.6)'}}>
             <Link href="#mappa" className="hover:opacity-100 transition" style={{color:'inherit'}}>Mappa</Link>
             <Link href="#architettura" className="hover:opacity-100 transition" style={{color:'inherit'}}>Architettura</Link>
-            <Link href="#console" className="hover:opacity-100 transition" style={{color:'inherit'}}>Console</Link>
             <a href="https://adrianochtribo-dot.github.io/MAMMUTH-EV/developer/developer-index.html" target="_blank" className="hover:opacity-100 transition" style={{color:'inherit'}}>Developer Portal</a>
           </div>
         </div>
@@ -121,64 +131,6 @@ export default function Home() {
         </div>
       </section>
 
-      {/* CONSOLE TERRITORIO — replica della console.html */}
-      <section id="console" style={{backgroundColor:'#141210'}}>
-        <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@1,600;1,700&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet" />
-        <div style={{display:'flex',minHeight:'560px',fontFamily:"'DM Mono',monospace",flexWrap:'wrap'}}>
-
-          {/* LATO SINISTRO — nero antracite */}
-          <div style={{flex:'1 1 380px',background:'#121212',padding:'48px 40px',position:'relative'}}>
-            <div style={{display:'flex',alignItems:'center',gap:'10px',fontSize:'.62rem',letterSpacing:'.34em',color:'#e23744',textTransform:'uppercase'}}>
-              <span style={{width:'6px',height:'6px',borderRadius:'50%',background:'#e23744',boxShadow:'0 0 10px #e23744'}} />
-              MAMMUTH•EV™ · Code 3620
-            </div>
-            <h2 style={{fontFamily:"'Playfair Display',serif",fontStyle:'italic',fontWeight:700,fontSize:'clamp(3.2rem,7vw,5.4rem)',lineHeight:.92,color:'#e23744',margin:'30px 0 0'}}>
-              Territorio
-              <small style={{display:'block',fontStyle:'normal',fontFamily:"'DM Mono',monospace",fontSize:'.66rem',letterSpacing:'.18em',color:'#8a8178',textTransform:'uppercase',marginTop:'14px'}}>Interroga la mappa, non l&apos;etichetta</small>
-            </h2>
-            <p style={{fontSize:'.72rem',lineHeight:1.9,color:'#8a8178',marginTop:'24px',maxWidth:'340px'}}>
-              Scrivi un comune nella <b style={{color:'#ece3d6',fontWeight:400}}>Dynamic Island</b> a destra. Il motore cerca tra gli eventi certificati e verifica, per ognuno, se le coordinate cadono davvero dentro i confini ISTAT del territorio. La <b style={{color:'#ece3d6',fontWeight:400}}>cucitura</b> al centro porta la richiesta dal lato dell&apos;archivio a quello della mappa.
-            </p>
-          </div>
-
-          {/* CUCITURA */}
-          <div style={{width:'18px',background:'#2a2017',position:'relative',flexShrink:0}}>
-            <div style={{position:'absolute',top:0,bottom:0,left:'5px',width:'1px',backgroundImage:'repeating-linear-gradient(to bottom, #cfc2ad 0 4px, transparent 4px 8px)'}} />
-            <div style={{position:'absolute',top:0,bottom:0,right:'5px',width:'1px',backgroundImage:'repeating-linear-gradient(to bottom, #cfc2ad 0 4px, transparent 4px 8px)'}} />
-          </div>
-
-          {/* LATO DESTRO — rosso */}
-          <div style={{flex:'1 1 380px',background:'linear-gradient(135deg,#c41420,#8f0d16)',padding:'48px 40px',display:'flex',alignItems:'center'}}>
-            <div style={{width:'100%',background:'rgba(10,10,10,.55)',border:'1px solid rgba(255,255,255,.08)',borderRadius:'18px',padding:'24px'}}>
-              <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start'}}>
-                <div>
-                  <div style={{fontSize:'.62rem',color:'#ece3d6',letterSpacing:'.06em'}}>Target Territory</div>
-                  <div style={{fontSize:'.66rem',color:'#e23744',fontWeight:500,marginTop:'3px',letterSpacing:'.1em',textTransform:'uppercase'}}>◎ In attesa · nessun territorio</div>
-                </div>
-                <div style={{textAlign:'right',fontSize:'.56rem',color:'#8a8178'}}>
-                  <div>Sab · 20 giu</div>
-                  <div style={{color:'#5a544c',marginTop:'2px'}}>Crawl window</div>
-                </div>
-              </div>
-              <div style={{padding:'14px 0',display:'flex',alignItems:'baseline',gap:'10px'}}>
-                <span style={{fontFamily:"'Playfair Display',serif",fontStyle:'italic',fontWeight:700,fontSize:'1.7rem',color:'#e23744'}}>Mammuth</span>
-                <span style={{fontSize:'.58rem',color:'#8a8178',letterSpacing:'.04em'}}>[v2.4_geo]</span>
-              </div>
-              <div style={{fontSize:'.62rem',lineHeight:1.7,color:'#8a8178',borderTop:'1px solid rgba(255,255,255,.05)',paddingTop:'12px'}}>
-                <div style={{fontSize:'.5rem',letterSpacing:'.2em',color:'#5a544c',textTransform:'uppercase',marginBottom:'5px'}}>T.C.F. Context Filter</div>
-                Tolleranza di precisione geografica impostata a <u style={{color:'#ece3d6',textDecoration:'underline dashed #e23744',textUnderlineOffset:'3px'}}>punto-nel-poligono</u>. Apri la Console per agganciare un comune.
-              </div>
-              <div style={{marginTop:'14px',paddingTop:'12px',borderTop:'1px solid rgba(255,255,255,.05)'}}>
-                <a href="https://adrianochtribo-dot.github.io/MAMMUTH-EV/developer/console.html" target="_blank" style={{display:'inline-flex',alignItems:'center',gap:'8px',padding:'10px 20px',borderRadius:'999px',background:'#e23744',color:'#141210',fontSize:'.62rem',fontWeight:500,letterSpacing:'.08em',textTransform:'uppercase',textDecoration:'none'}}>
-                  Apri la Console Territorio →
-                </a>
-              </div>
-            </div>
-          </div>
-
-        </div>
-      </section>
-
       {/* FOOTER */}
       <footer className="border-t py-12 text-center text-xs" style={{borderColor:'rgba(0,0,0,0.08)',color:'rgba(29,29,31,0.4)'}}>
         <p className="mb-2">MAMMUTH™ — KREATIO UNIVERSAL SYSTEM™ Code 3620</p>
@@ -187,6 +139,7 @@ export default function Home() {
         <p style={{color:'rgba(29,29,31,0.25)'}}>MAMMUTH™ · MAMMUTH•EVENTS™ are trademarks of Leonardo Adriano Chelariu. All rights reserved.</p>
       </footer>
 
+      </div>
     </div>
   )
 }
