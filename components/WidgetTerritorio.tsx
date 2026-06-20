@@ -2,58 +2,94 @@
 
 import { useState, useEffect } from 'react'
 
-// Widget verticale stile lockscreen telefono — colonna sinistra della home.
-// Dati reali: data di oggi, meteo Sermoneta (Open-Meteo, no key), conteggio eventi (Supabase REST).
-
 const SUPABASE_URL = 'https://pwfsuefyiiwnltikcdho.supabase.co'
 const SUPABASE_KEY = 'sb_publishable_5sHvYKX3YL7RI_RwpJK9FQ_-A2G7H63'
 
-const VOCI = [
-  { label: 'Mappa', href: '#mappa', icon: '◎' },
-  { label: 'Architettura', href: '#architettura', icon: '⬡' },
-  { label: 'Console', href: 'https://adrianochtribo-dot.github.io/MAMMUTH-EV/developer/console.html', icon: '⌘' },
-  { label: 'Developer Portal', href: 'https://adrianochtribo-dot.github.io/MAMMUTH-EV/developer/developer-index.html', icon: '⟁' },
-  { label: 'Pitch Deck', href: 'https://adrianochtribo-dot.github.io/MAMMUTH-EV/developer/pitch.html', icon: '◳' },
+const MESI = ['gennaio','febbraio','marzo','aprile','maggio','giugno','luglio','agosto','settembre','ottobre','novembre','dicembre']
+
+// Canali da cui arrivano i micro-eventi (ingestione)
+const CANALI = [
+  { label: 'WhatsApp', tipo: 'wa' },
+  { label: 'Instagram', tipo: 'ig' },
+  { label: 'Facebook', tipo: 'fb' },
+  { label: 'Telegram', tipo: 'tg' },
+  { label: 'TikTok', tipo: 'tk' },
+  { label: 'YouTube', tipo: 'yt' },
 ]
 
+// Fonti territoriali che inviano eventi
+const FONTI = [
+  { label: 'Comuni', tipo: 'comune' },
+  { label: 'Pro Loco', tipo: 'proloco' },
+  { label: 'Diocesi', tipo: 'diocesi' },
+]
+
+function Icona({ tipo }: { tipo: string }) {
+  const c = { width: 20, height: 20, fill: 'none', stroke: '#fff', strokeWidth: 1.4, strokeLinecap: 'round' as const, strokeLinejoin: 'round' as const }
+  switch (tipo) {
+    case 'wa': return <svg viewBox="0 0 24 24" {...c}><path d="M21 11.5a8.38 8.38 0 0 1-8.5 8.5 8.5 8.5 0 0 1-3.8-.9L3 21l1.9-5.7A8.5 8.5 0 1 1 21 11.5z"/><path d="M9 9.5c0 3 2.5 5.5 5.5 5.5l.5-1.5-2-1-1 1c-1-.5-2-1.5-2.5-2.5l1-1-1-2z" fill="#fff" stroke="none"/></svg>
+    case 'ig': return <svg viewBox="0 0 24 24" {...c}><rect x="4" y="4" width="16" height="16" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17" cy="7" r=".8" fill="#fff"/></svg>
+    case 'fb': return <svg viewBox="0 0 24 24" {...c}><path d="M14 8h2V5h-2c-1.7 0-3 1.3-3 3v2H9v3h2v6h3v-6h2.5l.5-3H14V8z" fill="#fff" stroke="none"/></svg>
+    case 'tg': return <svg viewBox="0 0 24 24" {...c}><path d="M21 5L3 12l5 2 2 5 3-3 4 3 4-14z"/><path d="M8 14l9-6-6 7" fill="none"/></svg>
+    case 'tk': return <svg viewBox="0 0 24 24" {...c}><path d="M9 18V6l9-2v10"/><circle cx="6.5" cy="18" r="2.5"/><circle cx="15.5" cy="14" r="2.5"/></svg>
+    case 'yt': return <svg viewBox="0 0 24 24" {...c}><rect x="3" y="6" width="18" height="12" rx="3"/><path d="M10 9.5l5 2.5-5 2.5z" fill="#fff" stroke="none"/></svg>
+    case 'comune': return <svg viewBox="0 0 24 24" {...c}><path d="M4 21h16M5 21V10l7-5 7 5v11M9 21v-6h6v6"/></svg>
+    case 'proloco': return <svg viewBox="0 0 24 24" {...c}><path d="M12 3l8 4v6c0 4-3.5 7-8 8-4.5-1-8-4-8-8V7l8-4z"/><path d="M9 12l2 2 4-4"/></svg>
+    case 'diocesi': return <svg viewBox="0 0 24 24" {...c}><path d="M12 3v18M8 7h8M6 21h12M9 12l-3 9M15 12l3 9"/></svg>
+    default: return null
+  }
+}
+
 export default function WidgetTerritorio() {
+  const [ora, setOra] = useState('')
   const [meteo, setMeteo] = useState<{ temp: number; perc: number; desc: string } | null>(null)
+  const [meteoErr, setMeteoErr] = useState(false)
   const [eventi, setEventi] = useState<number | null>(null)
 
   const oggi = new Date()
   const giorno = oggi.toLocaleDateString('it-IT', { weekday: 'long' })
   const giornoCap = giorno.charAt(0).toUpperCase() + giorno.slice(1)
-  const dataBreve = oggi.toLocaleDateString('it-IT', { day: 'numeric', month: 'short' })
+  const dataBreve = `${oggi.getDate()} ${MESI[oggi.getMonth()].slice(0,3)}`
+  const meseNome = MESI[oggi.getMonth()].charAt(0).toUpperCase() + MESI[oggi.getMonth()].slice(1)
   const settimana = Array.from({ length: 6 }, (_, i) => {
     const d = new Date(oggi)
     d.setDate(oggi.getDate() + i)
     return { n: d.getDate(), oggi: i === 0 }
   })
-  const ora = oggi.toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' })
 
   useEffect(() => {
-    // Meteo reale Sermoneta (lat 41.55, lng 12.99) — Open-Meteo, nessuna chiave
-    fetch('https://api.open-meteo.com/v1/forecast?latitude=41.55&longitude=12.99&current=temperature_2m,apparent_temperature,weather_code')
+    const tick = () => setOra(new Date().toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' }))
+    tick()
+    const id = setInterval(tick, 1000)
+
+    const ctrl = new AbortController()
+    const to = setTimeout(() => ctrl.abort(), 6000)
+    fetch('https://api.open-meteo.com/v1/forecast?latitude=41.55&longitude=12.99&current=temperature_2m,apparent_temperature,weather_code', { signal: ctrl.signal })
       .then(r => r.json())
       .then(d => {
+        clearTimeout(to)
         if (d.current) {
           const code = d.current.weather_code
           const desc = code === 0 ? 'sereno' : code < 4 ? 'poco nuvoloso' : code < 50 ? 'nuvoloso' : code < 70 ? 'pioggia' : 'variabile'
           setMeteo({ temp: Math.round(d.current.temperature_2m), perc: Math.round(d.current.apparent_temperature), desc })
-        }
+        } else setMeteoErr(true)
       })
-      .catch(() => {})
+      .catch(() => { setMeteoErr(true) })
 
-    // Conteggio eventi reale dal catalogo (stesso fetch della console.html)
     fetch(`${SUPABASE_URL}/rest/v1/eventi_catalogo_pubblico?select=*`, {
       headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}` },
     })
       .then(r => r.json())
       .then(d => { if (Array.isArray(d)) setEventi(d.length) })
       .catch(() => {})
+
+    return () => { clearInterval(id); clearTimeout(to) }
   }, [])
 
-  const pieno = eventi ? Math.min(100, Math.round((eventi / 100) * 100)) : 0
+  const pieno = eventi ? Math.min(100, eventi) : 0
+
+  const voceStyle = { display: 'flex', alignItems: 'center', gap: '14px', padding: '10px 4px', color: '#fff', textDecoration: 'none', borderBottom: '1px solid rgba(255,255,255,0.06)' } as const
+  const cerchioStyle = { width: '36px', height: '36px', borderRadius: '50%', border: '1px solid rgba(255,255,255,0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 } as const
 
   return (
     <aside
@@ -66,49 +102,42 @@ export default function WidgetTerritorio() {
         padding: '40px 28px',
         display: 'flex',
         flexDirection: 'column',
-        gap: '26px',
-        width: '280px',
+        gap: '22px',
+        width: '290px',
         height: '100vh',
         overflowY: 'auto',
       }}
     >
-      {/* data in alto */}
       <div>
         <div style={{ fontSize: '.78rem', color: 'rgba(255,255,255,0.6)' }}>{dataBreve}</div>
-        <div style={{ fontSize: '.78rem', color: 'rgba(255,255,255,0.45)', marginTop: '2px' }}>Sermoneta · oggi</div>
+        <div style={{ fontSize: '.78rem', color: 'rgba(255,255,255,0.45)', marginTop: '2px' }}>Sermoneta \u00B7 oggi</div>
       </div>
 
-      {/* giorno grande in corsivo */}
-      <div style={{ fontFamily: "'Snell Roundhand','Brush Script MT',cursive", fontStyle: 'italic', fontWeight: 700, fontSize: 'clamp(2.6rem,4vw,3.6rem)', lineHeight: 1, color: '#E879A0' }}>
+      <div style={{ fontFamily: "'Snell Roundhand','Brush Script MT',cursive", fontStyle: 'italic', fontWeight: 700, fontSize: 'clamp(2.4rem,4vw,3.4rem)', lineHeight: 1, color: '#E879A0' }}>
         {giornoCap}
       </div>
 
-      {/* meteo */}
       <div>
-        <div style={{ fontSize: '1.05rem', fontWeight: 500, marginBottom: '6px' }}>Meteo</div>
-        <div style={{ fontSize: '.82rem', color: 'rgba(255,255,255,0.55)', lineHeight: 1.5 }}>
-          {meteo
-            ? `A Sermoneta ${meteo.desc}, temperatura ${meteo.temp}°C. Percepiti ${meteo.perc}°C.`
-            : 'Caricamento meteo…'}
+        <div style={{ fontSize: '1rem', fontWeight: 500, marginBottom: '6px' }}>Meteo</div>
+        <div style={{ fontSize: '.8rem', color: 'rgba(255,255,255,0.55)', lineHeight: 1.5 }}>
+          {meteo ? `A Sermoneta ${meteo.desc}, ${meteo.temp}\u00B0C. Percepiti ${meteo.perc}\u00B0C.` : meteoErr ? 'Meteo non disponibile.' : 'Caricamento meteo\u2026'}
         </div>
       </div>
 
-      {/* settimana + ora */}
       <div>
-        <div style={{ fontSize: '1.05rem', fontWeight: 500, marginBottom: '10px' }}>Giugno</div>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', position: 'relative' }}>
+        <div style={{ fontSize: '1rem', fontWeight: 500, marginBottom: '10px' }}>{meseNome}</div>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           {settimana.map((d, i) => (
-            <span key={i} style={{ fontSize: '.9rem', color: d.oggi ? '#fff' : 'rgba(255,255,255,0.3)', fontWeight: d.oggi ? 600 : 400 }}>{d.n}</span>
+            <span key={i} style={{ fontSize: '.88rem', color: d.oggi ? '#fff' : 'rgba(255,255,255,0.3)', fontWeight: d.oggi ? 600 : 400, borderBottom: d.oggi ? '2px solid #E879A0' : 'none', paddingBottom: '2px' }}>{d.n}</span>
           ))}
         </div>
-        <div style={{ borderTop: '1px solid rgba(255,255,255,0.12)', marginTop: '10px', paddingTop: '6px', textAlign: 'right', fontSize: '1.1rem', fontWeight: 600 }}>{ora}</div>
+        <div style={{ borderTop: '1px solid rgba(255,255,255,0.12)', marginTop: '10px', paddingTop: '6px', textAlign: 'right', fontSize: '1.05rem', fontWeight: 600, fontVariantNumeric: 'tabular-nums' }}>{ora}</div>
       </div>
 
-      {/* "batteria" = eventi catalogo */}
       <div>
-        <div style={{ fontSize: '1.05rem', fontWeight: 500, marginBottom: '6px' }}>Catalogo</div>
-        <div style={{ fontSize: '.82rem', color: 'rgba(255,255,255,0.55)', marginBottom: '10px' }}>
-          {eventi !== null ? `${eventi} eventi certificati nel territorio.` : 'Conteggio eventi…'}
+        <div style={{ fontSize: '1rem', fontWeight: 500, marginBottom: '6px' }}>Catalogo</div>
+        <div style={{ fontSize: '.8rem', color: 'rgba(255,255,255,0.55)', marginBottom: '10px' }}>
+          {eventi !== null ? `${eventi} eventi certificati.` : 'Conteggio eventi\u2026'}
         </div>
         <div style={{ position: 'relative', height: '4px', borderRadius: '3px', background: 'rgba(255,255,255,0.12)' }}>
           <div style={{ position: 'absolute', left: 0, top: 0, height: '4px', borderRadius: '3px', width: `${pieno}%`, background: '#E879A0', transition: 'width 1s ease' }} />
@@ -116,17 +145,24 @@ export default function WidgetTerritorio() {
         </div>
       </div>
 
-      {/* lista voci con iconcine */}
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', marginTop: '4px' }}>
-        {VOCI.map((v) => (
-          <a
-            key={v.label}
-            href={v.href}
-            target={v.href.startsWith('http') ? '_blank' : undefined}
-            style={{ display: 'flex', alignItems: 'center', gap: '16px', padding: '11px 4px', color: '#fff', textDecoration: 'none', borderBottom: '1px solid rgba(255,255,255,0.06)' }}
-          >
-            <span style={{ width: '34px', height: '34px', borderRadius: '50%', border: '1px solid rgba(255,255,255,0.4)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1rem', flexShrink: 0 }}>{v.icon}</span>
-            <span style={{ fontSize: '.92rem' }}>{v.label}</span>
+      {/* CANALI INGESTIONE — da qui arrivano i micro-eventi */}
+      <div>
+        <div style={{ fontSize: '.58rem', letterSpacing: '.18em', color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', marginBottom: '6px' }}>Invia un evento</div>
+        {CANALI.map(({ label, tipo }) => (
+          <a key={label} href="https://adrianochtribo-dot.github.io/MAMMUTH-EV/developer/console.html" target="_blank" style={voceStyle}>
+            <span style={cerchioStyle}><Icona tipo={tipo} /></span>
+            <span style={{ fontSize: '.9rem' }}>{label}</span>
+          </a>
+        ))}
+      </div>
+
+      {/* FONTI TERRITORIALI */}
+      <div>
+        <div style={{ fontSize: '.58rem', letterSpacing: '.18em', color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', marginBottom: '6px' }}>Fonti del territorio</div>
+        {FONTI.map(({ label, tipo }) => (
+          <a key={label} href="https://adrianochtribo-dot.github.io/MAMMUTH-EV/developer/console.html" target="_blank" style={voceStyle}>
+            <span style={cerchioStyle}><Icona tipo={tipo} /></span>
+            <span style={{ fontSize: '.9rem' }}>{label}</span>
           </a>
         ))}
       </div>
