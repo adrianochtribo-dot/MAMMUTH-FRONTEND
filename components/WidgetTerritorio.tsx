@@ -42,7 +42,7 @@ function Icona({ tipo }: { tipo: string }) {
 
 export default function WidgetTerritorio() {
   const [ora, setOra] = useState('')
-  const [meteo, setMeteo] = useState<{ temp: number; perc: number; desc: string } | null>(null)
+  const [meteo, setMeteo] = useState<{ temp: number; perc: number; desc: string; luogo: string } | null>(null)
   const [meteoErr, setMeteoErr] = useState(false)
   const [eventi, setEventi] = useState<number | null>(null)
   const [prossimo, setProssimo] = useState<{ titolo: string; quando: string } | null>(null)
@@ -64,19 +64,37 @@ export default function WidgetTerritorio() {
     tick()
     const id = setInterval(tick, 1000)
 
-    const ctrl = new AbortController()
-    const to = setTimeout(() => ctrl.abort(), 6000)
-    fetch('https://api.open-meteo.com/v1/forecast?latitude=41.55&longitude=12.99&current=temperature_2m,apparent_temperature,weather_code', { signal: ctrl.signal })
-      .then(r => r.json())
-      .then(d => {
-        clearTimeout(to)
-        if (d.current) {
+    // meteo basato sulla posizione reale dell'utente; fallback Sermoneta
+    const caricaMeteo = (lat: number, lng: number, nomeNoto?: string) => {
+      const ctrl = new AbortController()
+      const to = setTimeout(() => ctrl.abort(), 6000)
+      fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lng}&current=temperature_2m,apparent_temperature,weather_code`, { signal: ctrl.signal })
+        .then(r => r.json())
+        .then(d => {
+          clearTimeout(to)
+          if (!d.current) { setMeteoErr(true); return }
           const code = d.current.weather_code
           const desc = code === 0 ? 'sereno' : code < 4 ? 'poco nuvoloso' : code < 50 ? 'nuvoloso' : code < 70 ? 'pioggia' : 'variabile'
-          setMeteo({ temp: Math.round(d.current.temperature_2m), perc: Math.round(d.current.apparent_temperature), desc })
-        } else setMeteoErr(true)
-      })
-      .catch(() => { setMeteoErr(true) })
+          const set = (luogo: string) => setMeteo({ temp: Math.round(d.current.temperature_2m), perc: Math.round(d.current.apparent_temperature), desc, luogo })
+          if (nomeNoto) { set(nomeNoto); return }
+          // ricava il nome della citta dalle coordinate
+          fetch(`https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${lat}&longitude=${lng}&localityLanguage=it`)
+            .then(r => r.json())
+            .then(g => set(g.city || g.locality || g.principalSubdivision || 'zona attuale'))
+            .catch(() => set('zona attuale'))
+        })
+        .catch(() => { setMeteoErr(true) })
+    }
+
+    if (typeof navigator !== 'undefined' && navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        pos => caricaMeteo(pos.coords.latitude, pos.coords.longitude),
+        () => caricaMeteo(41.55, 12.99, 'Sermoneta'),
+        { timeout: 6000, maximumAge: 600000 }
+      )
+    } else {
+      caricaMeteo(41.55, 12.99, 'Sermoneta')
+    }
 
     fetch(`${SUPABASE_URL}/rest/v1/eventi_catalogo_pubblico?select=*`, {
       headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}` },
@@ -105,7 +123,7 @@ export default function WidgetTerritorio() {
       })
       .catch(() => {})
 
-    return () => { clearInterval(id); clearTimeout(to) }
+    return () => { clearInterval(id) }
   }, [])
 
   const pieno = eventi ? Math.min(100, eventi) : 0
@@ -153,7 +171,7 @@ export default function WidgetTerritorio() {
       <div>
         <div style={headStyle}>Meteo</div>
         <div style={subStyle}>
-          {meteo ? `A Sermoneta ${meteo.desc}, ${meteo.temp}\u00B0C. Percepiti ${meteo.perc}\u00B0C.` : meteoErr ? 'Meteo non disponibile.' : 'Caricamento meteo\u2026'}
+          {meteo ? `A ${meteo.luogo} ${meteo.desc}, ${meteo.temp}\u00B0C. Percepiti ${meteo.perc}\u00B0C.` : meteoErr ? 'Meteo non disponibile.' : 'Caricamento meteo\u2026'}
         </div>
       </div>
 
