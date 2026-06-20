@@ -183,9 +183,6 @@ export default function WidgetTerritorio() {
   }, [userPos, eventiRaw])
 
   const pieno = eventi ? Math.min(100, eventi) : 0
-  const rigaEvento = prossimo
-    ? `${prossimo.titolo} \u2022 ${prossimo.quando}`
-    : `Sermoneta \u2022 oggi`
 
   const voceStyle = { display: 'flex', alignItems: 'center', gap: '14px', padding: '10px 4px', color: '#fff', textDecoration: 'none', borderBottom: '1px solid rgba(255,255,255,0.06)' } as const
   const cerchioStyle = { width: '36px', height: '36px', borderRadius: '50%', border: '1px solid rgba(255,255,255,0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 } as const
@@ -209,13 +206,9 @@ export default function WidgetTerritorio() {
         overflowY: 'auto',
       }}
     >
-      {/* righe data + prossimo evento (dinamiche) */}
+      {/* riga data (dinamica) */}
       <div>
         <div style={{ fontSize: '1.05rem', fontWeight: 700 }}>{dataLine}</div>
-        <div style={{ fontSize: '1.05rem', fontWeight: 700, marginTop: '4px', display: 'flex', gap: '6px' }}>
-          <span style={{ color: ACCENT }}>{'\u2022'}</span>
-          <span style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{prossimo ? prossimo.titolo : 'Sermoneta'} <span style={{ color: 'rgba(255,255,255,0.55)', fontWeight: 500 }}>{prossimo ? prossimo.quando : 'oggi'}</span></span>
-        </div>
       </div>
 
       {/* giorno grande corsivo (dinamico) */}
