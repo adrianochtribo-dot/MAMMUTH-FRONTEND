@@ -44,19 +44,12 @@ export default function WidgetTerritorio() {
       })
       .catch(() => {})
 
-    // Conteggio eventi reale dal catalogo
-    fetch(`${SUPABASE_URL}/rest/v1/eventi_catalogo_pubblico?select=staging_id`, {
-      headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}`, Prefer: 'count=exact' },
+    // Conteggio eventi reale dal catalogo (stesso fetch della console.html)
+    fetch(`${SUPABASE_URL}/rest/v1/eventi_catalogo_pubblico?select=*`, {
+      headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}` },
     })
-      .then(r => {
-        const range = r.headers.get('content-range')
-        if (range) {
-          const tot = parseInt(range.split('/')[1])
-          if (!isNaN(tot)) setEventi(tot)
-        }
-        return r.json()
-      })
-      .then(d => { if (Array.isArray(d) && eventi === null) setEventi(d.length) })
+      .then(r => r.json())
+      .then(d => { if (Array.isArray(d)) setEventi(d.length) })
       .catch(() => {})
   }, [])
 
@@ -74,7 +67,9 @@ export default function WidgetTerritorio() {
         display: 'flex',
         flexDirection: 'column',
         gap: '26px',
-        minHeight: '100vh',
+        width: '280px',
+        height: '100vh',
+        overflowY: 'auto',
       }}
     >
       {/* data in alto */}
