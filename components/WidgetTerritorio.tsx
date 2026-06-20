@@ -110,7 +110,7 @@ export default function WidgetTerritorio() {
     >
       <div>
         <div style={{ fontSize: '.78rem', color: 'rgba(255,255,255,0.6)' }}>{dataBreve}</div>
-        <div style={{ fontSize: '.78rem', color: 'rgba(255,255,255,0.45)', marginTop: '2px' }}>Sermoneta \u00B7 oggi</div>
+        <div style={{ fontSize: '.78rem', color: 'rgba(255,255,255,0.45)', marginTop: '2px' }}>Sermoneta · oggi</div>
       </div>
 
       <div style={{ fontFamily: "'Snell Roundhand','Brush Script MT',cursive", fontStyle: 'italic', fontWeight: 700, fontSize: 'clamp(2.4rem,4vw,3.4rem)', lineHeight: 1, color: '#E879A0' }}>
@@ -120,7 +120,7 @@ export default function WidgetTerritorio() {
       <div>
         <div style={{ fontSize: '1rem', fontWeight: 500, marginBottom: '6px' }}>Meteo</div>
         <div style={{ fontSize: '.8rem', color: 'rgba(255,255,255,0.55)', lineHeight: 1.5 }}>
-          {meteo ? `A Sermoneta ${meteo.desc}, ${meteo.temp}\u00B0C. Percepiti ${meteo.perc}\u00B0C.` : meteoErr ? 'Meteo non disponibile.' : 'Caricamento meteo\u2026'}
+          {meteo ? `A Sermoneta ${meteo.desc}, ${meteo.temp}°C. Percepiti ${meteo.perc}°C.` : meteoErr ? 'Meteo non disponibile.' : 'Caricamento meteo…'}
         </div>
       </div>
 
@@ -137,7 +137,7 @@ export default function WidgetTerritorio() {
       <div>
         <div style={{ fontSize: '1rem', fontWeight: 500, marginBottom: '6px' }}>Catalogo</div>
         <div style={{ fontSize: '.8rem', color: 'rgba(255,255,255,0.55)', marginBottom: '10px' }}>
-          {eventi !== null ? `${eventi} eventi certificati.` : 'Conteggio eventi\u2026'}
+          {eventi !== null ? `${eventi} eventi certificati.` : 'Conteggio eventi…'}
         </div>
         <div style={{ position: 'relative', height: '4px', borderRadius: '3px', background: 'rgba(255,255,255,0.12)' }}>
           <div style={{ position: 'absolute', left: 0, top: 0, height: '4px', borderRadius: '3px', width: `${pieno}%`, background: '#E879A0', transition: 'width 1s ease' }} />
