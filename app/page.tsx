@@ -4,17 +4,14 @@ import WidgetTerritorio from '@/components/WidgetTerritorio'
 
 export default function Home() {
   return (
-    <div style={{display:'flex',minHeight:'100vh',backgroundColor:'#F5F5F7'}}>
-
-      {/* COLONNA SINISTRA — widget verticale stile telefono (primo quarto) */}
-      <div style={{width:'25%',minWidth:'260px',flexShrink:0}} className="hidden md:block">
-        <div style={{position:'sticky',top:0}}>
-          <WidgetTerritorio />
-        </div>
+    <>
+      {/* WIDGET BARRA FISSA A SINISTRA — non strizza la home, ci galleggia sopra */}
+      <div className="hidden lg:block" style={{position:'fixed',top:0,left:0,bottom:0,zIndex:40}}>
+        <WidgetTerritorio />
       </div>
 
-      {/* COLONNA DESTRA — contenuto del sito */}
-      <div className="min-h-screen font-sans antialiased overflow-x-hidden" style={{flex:1,backgroundColor:'#F5F5F7',color:'#1D1D1F'}}>
+      {/* HOME — invariata, con margine sinistro per non finire sotto il widget */}
+      <div className="min-h-screen font-sans antialiased overflow-x-hidden lg:ml-[280px]" style={{backgroundColor:'#F5F5F7',color:'#1D1D1F'}}>
 
       {/* NAVBAR */}
       <nav className="sticky top-0 z-50 backdrop-blur-md border-b" style={{backgroundColor:'rgba(245,245,247,0.8)',borderColor:'rgba(0,0,0,0.08)'}}>
@@ -139,7 +136,7 @@ export default function Home() {
         <p style={{color:'rgba(29,29,31,0.25)'}}>MAMMUTH™ · MAMMUTH•EVENTS™ are trademarks of Leonardo Adriano Chelariu. All rights reserved.</p>
       </footer>
 
-      </div>
     </div>
+    </>
   )
 }
