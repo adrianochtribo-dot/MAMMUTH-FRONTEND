@@ -12,6 +12,7 @@ export default function Home() {
           <div className="flex gap-6 text-xs" style={{color:'rgba(29,29,31,0.6)'}}>
             <Link href="#mappa" className="hover:opacity-100 transition" style={{color:'inherit'}}>Mappa</Link>
             <Link href="#architettura" className="hover:opacity-100 transition" style={{color:'inherit'}}>Architettura</Link>
+            <a href="https://adrianochtribo-dot.github.io/MAMMUTH-EV/developer/console.html" target="_blank" className="hover:opacity-100 transition" style={{color:'inherit'}}>Console</a>
             <a href="https://adrianochtribo-dot.github.io/MAMMUTH-EV/developer/developer-index.html" target="_blank" className="hover:opacity-100 transition" style={{color:'inherit'}}>Developer Portal</a>
           </div>
         </div>
@@ -117,6 +118,29 @@ export default function Home() {
               <div className="text-xs" style={{color:'rgba(29,29,31,0.5)'}}>{item.desc}</div>
             </div>
           ))}
+        </div>
+      </section>
+
+      {/* CONSOLE TERRITORIO */}
+      <section id="console" className="px-6 py-20" style={{backgroundColor:'#0a0a0a'}}>
+        <div className="max-w-5xl mx-auto">
+          <span className="text-xs font-medium tracking-widest uppercase mb-3 block" style={{color:'#E89A8C'}}>
+            Console Territorio · Live
+          </span>
+          <h2 className="text-3xl md:text-4xl font-semibold tracking-tight mb-3" style={{color:'#fff'}}>
+            Interroga la mappa, <span style={{color:'#E89A8C',fontStyle:'italic'}}>non l&apos;etichetta.</span>
+          </h2>
+          <p className="text-sm max-w-xl mb-8" style={{color:'rgba(255,255,255,0.55)'}}>
+            Digita un comune: il motore verifica in tempo reale se ogni evento cade davvero dentro i confini ISTAT del territorio. Geomatch punto-nel-poligono, eventi certificati, zero dati inventati.
+          </p>
+          <div className="flex flex-wrap gap-2 mb-10">
+            {['Bassiano','Latina','Ponza','Sermoneta','Sezze','Terracina'].map((c) => (
+              <span key={c} className="px-4 py-2 rounded-full text-sm font-mono" style={{border:'1px solid rgba(255,255,255,0.15)',color:'rgba(255,255,255,0.8)',backgroundColor:'rgba(255,255,255,0.05)'}}>{c}</span>
+            ))}
+          </div>
+          <a href="https://adrianochtribo-dot.github.io/MAMMUTH-EV/developer/console.html" target="_blank" className="inline-flex items-center gap-2 px-7 py-3 rounded-full text-sm font-semibold transition-opacity hover:opacity-80" style={{backgroundColor:'#E89A8C',color:'#0a0a0a',textDecoration:'none'}}>
+            Apri la Console Territorio →
+          </a>
         </div>
       </section>
 
