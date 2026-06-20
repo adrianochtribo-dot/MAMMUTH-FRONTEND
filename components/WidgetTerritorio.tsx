@@ -98,31 +98,29 @@ export default function WidgetTerritorio() {
         .catch(() => { setMeteoErr(true) })
     }
 
-    // rileva la posizione dall'IP della connessione (nessun permesso richiesto); ultima spiaggia Sermoneta
-    const viaIP = () => {
+    // rileva la posizione dall'IP della connessione, provando piu servizi in cascata; nessun permesso, nessun popup
+    const PROVIDER: { url: string; pick: (g: any) => { lat: number; lng: number; city: string } | null }[] = [
+      { url: 'https://ipwho.is/', pick: g => (g && g.success !== false && g.latitude) ? { lat: Number(g.latitude), lng: Number(g.longitude), city: g.city || g.region || '' } : null },
+      { url: 'https://get.geojs.io/v1/ip/geo.json', pick: g => (g && g.latitude) ? { lat: Number(g.latitude), lng: Number(g.longitude), city: g.city || g.region || '' } : null },
+      { url: 'https://ipapi.co/json/', pick: g => (g && g.latitude) ? { lat: Number(g.latitude), lng: Number(g.longitude), city: g.city || g.region || '' } : null },
+      { url: 'https://freeipapi.com/api/json', pick: g => (g && g.latitude) ? { lat: Number(g.latitude), lng: Number(g.longitude), city: g.cityName || g.regionName || '' } : null },
+    ]
+    const provaProvider = (i: number) => {
+      if (i >= PROVIDER.length) { caricaMeteo(41.55, 12.99, 'Sermoneta'); return }
+      const p = PROVIDER[i]
       const ctrl = new AbortController()
-      const to = setTimeout(() => ctrl.abort(), 6000)
-      fetch('https://ipwho.is/', { signal: ctrl.signal })
+      const to = setTimeout(() => ctrl.abort(), 5000)
+      fetch(p.url, { signal: ctrl.signal })
         .then(r => r.json())
         .then(g => {
           clearTimeout(to)
-          if (g && g.success !== false && g.latitude && g.longitude) {
-            caricaMeteo(g.latitude, g.longitude, g.city || g.region || 'zona attuale')
-          } else {
-            caricaMeteo(41.55, 12.99, 'Sermoneta')
-          }
+          const res = p.pick(g)
+          if (res && !isNaN(res.lat) && !isNaN(res.lng)) caricaMeteo(res.lat, res.lng, res.city || 'zona attuale')
+          else provaProvider(i + 1)
         })
-        .catch(() => caricaMeteo(41.55, 12.99, 'Sermoneta'))
+        .catch(() => { clearTimeout(to); provaProvider(i + 1) })
     }
-    if (typeof navigator !== 'undefined' && navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(
-        pos => caricaMeteo(pos.coords.latitude, pos.coords.longitude),
-        () => viaIP(),
-        { timeout: 5000, maximumAge: 600000 }
-      )
-    } else {
-      viaIP()
-    }
+    provaProvider(0)
 
     fetch(`${SUPABASE_URL}/rest/v1/eventi_catalogo_pubblico?select=*`, {
       headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}` },
