@@ -46,6 +46,8 @@ export default function WidgetTerritorio() {
   const [meteoErr, setMeteoErr] = useState(false)
   const [eventi, setEventi] = useState<number | null>(null)
   const [prossimo, setProssimo] = useState<{ titolo: string; quando: string } | null>(null)
+  const [userPos, setUserPos] = useState<{ lat: number; lng: number } | null>(null)
+  const [eventiRaw, setEventiRaw] = useState<{ titolo: string; d: Date; lat: number | null; lng: number | null }[]>([])
 
   const oggi = new Date()
   const giornoCap = GIORNI[oggi.getDay()].charAt(0).toUpperCase() + GIORNI[oggi.getDay()].slice(1)
@@ -86,14 +88,30 @@ export default function WidgetTerritorio() {
         .catch(() => { setMeteoErr(true) })
     }
 
+    // rileva la posizione dall'IP della connessione (nessun permesso richiesto); ultima spiaggia Sermoneta
+    const viaIP = () => {
+      const ctrl = new AbortController()
+      const to = setTimeout(() => ctrl.abort(), 6000)
+      fetch('https://ipwho.is/', { signal: ctrl.signal })
+        .then(r => r.json())
+        .then(g => {
+          clearTimeout(to)
+          if (g && g.success !== false && g.latitude && g.longitude) {
+            caricaMeteo(g.latitude, g.longitude, g.city || g.region || 'zona attuale')
+          } else {
+            caricaMeteo(41.55, 12.99, 'Sermoneta')
+          }
+        })
+        .catch(() => caricaMeteo(41.55, 12.99, 'Sermoneta'))
+    }
     if (typeof navigator !== 'undefined' && navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
         pos => caricaMeteo(pos.coords.latitude, pos.coords.longitude),
-        () => caricaMeteo(41.55, 12.99, 'Sermoneta'),
-        { timeout: 6000, maximumAge: 600000 }
+        () => viaIP(),
+        { timeout: 5000, maximumAge: 600000 }
       )
     } else {
-      caricaMeteo(41.55, 12.99, 'Sermoneta')
+      viaIP()
     }
 
     fetch(`${SUPABASE_URL}/rest/v1/eventi_catalogo_pubblico?select=*`, {
