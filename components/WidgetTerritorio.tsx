@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 
 const SUPABASE_URL = 'https://pwfsuefyiiwnltikcdho.supabase.co'
 const SUPABASE_KEY = 'sb_publishable_5sHvYKX3YL7RI_RwpJK9FQ_-A2G7H63'
@@ -57,6 +57,10 @@ export default function WidgetTerritorio() {
   const [prossimo, setProssimo] = useState<{ titolo: string; quando: string } | null>(null)
   const [userPos, setUserPos] = useState<{ lat: number; lng: number } | null>(null)
   const [eventiRaw, setEventiRaw] = useState<{ titolo: string; d: Date; lat: number | null; lng: number | null }[]>([])
+  const [scegli, setScegli] = useState(false)
+  const [query, setQuery] = useState('')
+  const [cercando, setCercando] = useState(false)
+  const caricaMeteoRef = useRef<((lat: number, lng: number, nomeNoto?: string, persisti?: boolean) => void) | null>(null)
 
   const oggi = new Date()
   const giornoCap = GIORNI[oggi.getDay()].charAt(0).toUpperCase() + GIORNI[oggi.getDay()].slice(1)
@@ -75,8 +79,8 @@ export default function WidgetTerritorio() {
     tick()
     const id = setInterval(tick, 1000)
 
-    // meteo basato sulla posizione reale dell'utente; fallback Sermoneta
-    const caricaMeteo = (lat: number, lng: number, nomeNoto?: string) => {
+    // meteo sulla posizione reale; persisti=true salva la scelta (GPS o manuale) sul dispositivo
+    const caricaMeteo = (lat: number, lng: number, nomeNoto?: string, persisti?: boolean) => {
       setUserPos({ lat, lng })
       const ctrl = new AbortController()
       const to = setTimeout(() => ctrl.abort(), 6000)
@@ -87,9 +91,12 @@ export default function WidgetTerritorio() {
           if (!d.current) { setMeteoErr(true); return }
           const code = d.current.weather_code
           const desc = code === 0 ? 'sereno' : code < 4 ? 'poco nuvoloso' : code < 50 ? 'nuvoloso' : code < 70 ? 'pioggia' : 'variabile'
-          const set = (luogo: string) => setMeteo({ temp: Math.round(d.current.temperature_2m), perc: Math.round(d.current.apparent_temperature), desc, luogo })
+          const set = (luogo: string) => {
+            setMeteo({ temp: Math.round(d.current.temperature_2m), perc: Math.round(d.current.apparent_temperature), desc, luogo })
+            if (persisti) { try { localStorage.setItem('mammuth_geo', JSON.stringify({ lat, lng, nome: luogo })) } catch (e) {} }
+          }
           if (nomeNoto) { set(nomeNoto); return }
-          // ricava il nome della citta dalle coordinate
+          // ricava il nome del comune dalle coordinate
           fetch(`https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${lat}&longitude=${lng}&localityLanguage=it`)
             .then(r => r.json())
             .then(g => set(g.city || g.locality || g.principalSubdivision || 'zona attuale'))
@@ -97,6 +104,7 @@ export default function WidgetTerritorio() {
         })
         .catch(() => { setMeteoErr(true) })
     }
+    ;(caricaMeteoRef as any).current = caricaMeteo
 
     // rileva la posizione dall'IP della connessione, provando piu servizi in cascata; nessun permesso, nessun popup
     const PROVIDER: { url: string; pick: (g: any) => { lat: number; lng: number; city: string } | null }[] = [
@@ -120,8 +128,20 @@ export default function WidgetTerritorio() {
         })
         .catch(() => { clearTimeout(to); provaProvider(i + 1) })
     }
-    provaProvider(0)
-
+    // 0) scelta salvata sul dispositivo  1) GPS preciso (col permesso, salva)  2) ripiego IP
+    let salvato: { lat: number; lng: number; nome: string } | null = null
+    try { const s = localStorage.getItem('mammuth_geo'); if (s) salvato = JSON.parse(s) } catch (e) {}
+    if (salvato && typeof salvato.lat === 'number' && typeof salvato.lng === 'number') {
+      caricaMeteo(salvato.lat, salvato.lng, salvato.nome)
+    } else if (typeof navigator !== 'undefined' && navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        pos => caricaMeteo(pos.coords.latitude, pos.coords.longitude, undefined, true),
+        () => provaProvider(0),
+        { enableHighAccuracy: true, timeout: 12000, maximumAge: 300000 }
+      )
+    } else {
+      provaProvider(0)
+    }
     fetch(`${SUPABASE_URL}/rest/v1/eventi_catalogo_pubblico?select=*`, {
       headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}` },
     })
@@ -171,6 +191,25 @@ export default function WidgetTerritorio() {
     ? `${prossimo.titolo} \u2022 ${prossimo.quando}`
     : `Sermoneta \u2022 oggi`
 
+  // cerca un comune italiano e ne usa le coordinate esatte (geocoding Open-Meteo), salvando la scelta
+  const cercaComune = () => {
+    const q = query.trim()
+    if (!q) return
+    setCercando(true)
+    fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(q)}&count=1&language=it&country=IT`)
+      .then(r => r.json())
+      .then(j => {
+        const r0 = j && j.results && j.results[0]
+        if (r0 && caricaMeteoRef.current) {
+          caricaMeteoRef.current(r0.latitude, r0.longitude, r0.name, true)
+          setScegli(false)
+          setQuery('')
+        }
+      })
+      .catch(() => {})
+      .finally(() => setCercando(false))
+  }
+
   const voceStyle = { display: 'flex', alignItems: 'center', gap: '14px', padding: '10px 4px', color: '#fff', textDecoration: 'none', borderBottom: '1px solid rgba(255,255,255,0.06)' } as const
   const cerchioStyle = { width: '36px', height: '36px', borderRadius: '50%', border: '1px solid rgba(255,255,255,0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 } as const
   const headStyle = { fontSize: '1.35rem', fontWeight: 700, color: '#fff', marginBottom: '6px' } as const
@@ -213,6 +252,25 @@ export default function WidgetTerritorio() {
         <div style={subStyle}>
           {meteo ? `A ${meteo.luogo} ${meteo.desc}, ${meteo.temp}\u00B0C. Percepiti ${meteo.perc}\u00B0C.` : meteoErr ? 'Meteo non disponibile.' : 'Caricamento meteo\u2026'}
         </div>
+        {!scegli ? (
+          <button onClick={() => setScegli(true)} style={{ marginTop: '8px', background: 'none', border: 'none', color: ACCENT, fontSize: '.72rem', cursor: 'pointer', padding: 0, textDecoration: 'underline' }}>
+            Non sei qui? Cambia comune
+          </button>
+        ) : (
+          <div style={{ marginTop: '10px', display: 'flex', gap: '6px' }}>
+            <input
+              value={query}
+              onChange={e => setQuery(e.target.value)}
+              onKeyDown={e => { if (e.key === 'Enter') cercaComune() }}
+              placeholder="Scrivi il comune"
+              autoFocus
+              style={{ flex: 1, minWidth: 0, background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.2)', borderRadius: '8px', color: '#fff', fontSize: '.8rem', padding: '6px 8px', outline: 'none' }}
+            />
+            <button onClick={cercaComune} disabled={cercando} style={{ background: ACCENT, border: 'none', borderRadius: '8px', color: '#fff', fontSize: '.78rem', padding: '6px 10px', cursor: 'pointer', flexShrink: 0 }}>
+              {cercando ? '\u2026' : 'OK'}
+            </button>
+          </div>
+        )}
       </div>
 
       {/* mese + settimana + orologio live (dinamici) */}
