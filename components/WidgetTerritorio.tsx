@@ -9,6 +9,15 @@ const ACCENT = '#E83E7C'
 const MESI = ['gennaio','febbraio','marzo','aprile','maggio','giugno','luglio','agosto','settembre','ottobre','novembre','dicembre']
 const GIORNI = ['domenica','luned\u00EC','marted\u00EC','mercoled\u00EC','gioved\u00EC','venerd\u00EC','sabato']
 
+// distanza in km tra due coordinate (haversine)
+function distanzaKm(lat1: number, lng1: number, lat2: number, lng2: number) {
+  const R = 6371
+  const dLat = (lat2 - lat1) * Math.PI / 180
+  const dLng = (lng2 - lng1) * Math.PI / 180
+  const a = Math.sin(dLat / 2) ** 2 + Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * Math.sin(dLng / 2) ** 2
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a))
+}
+
 const CANALI = [
   { label: 'WhatsApp', tipo: 'wa' },
   { label: 'Instagram', tipo: 'ig' },
@@ -68,6 +77,7 @@ export default function WidgetTerritorio() {
 
     // meteo basato sulla posizione reale dell'utente; fallback Sermoneta
     const caricaMeteo = (lat: number, lng: number, nomeNoto?: string) => {
+      setUserPos({ lat, lng })
       const ctrl = new AbortController()
       const to = setTimeout(() => ctrl.abort(), 6000)
       fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lng}&current=temperature_2m,apparent_temperature,weather_code`, { signal: ctrl.signal })
@@ -121,28 +131,42 @@ export default function WidgetTerritorio() {
       .then(d => {
         if (!Array.isArray(d)) return
         setEventi(d.length)
-        // prossimo evento reale: cerca titolo e data tra i nomi colonna possibili
         const t0 = new Date(); t0.setHours(0, 0, 0, 0)
         const lista = d
           .map((e: any) => ({
             titolo: e.titolo || e.nome || e.titolo_evento || e.name || '',
             raw: e.data_inizio || e.data || e.data_evento || e.inizio || '',
+            lat: e.lat ?? e.latitude ?? e.y ?? null,
+            lng: e.lng ?? e.longitude ?? e.lon ?? e.x ?? null,
           }))
           .filter((e: any) => e.titolo && e.raw)
-          .map((e: any) => ({ titolo: e.titolo, d: new Date(e.raw) }))
+          .map((e: any) => ({ titolo: e.titolo, d: new Date(e.raw), lat: e.lat !== null ? Number(e.lat) : null, lng: e.lng !== null ? Number(e.lng) : null }))
           .filter((e: any) => !isNaN(e.d.getTime()) && e.d >= t0)
-          .sort((a: any, b: any) => a.d.getTime() - b.d.getTime())
-        if (lista.length) {
-          const ev = lista[0]
-          const diff = Math.round((ev.d.getTime() - t0.getTime()) / 86400000)
-          const quando = diff === 0 ? 'oggi' : diff === 1 ? 'domani' : `${ev.d.getDate()} ${MESI[ev.d.getMonth()].slice(0, 3)}`
-          setProssimo({ titolo: ev.titolo, quando })
-        }
+        setEventiRaw(lista)
       })
       .catch(() => {})
 
     return () => { clearInterval(id) }
   }, [])
+
+  // sceglie l'evento piu VICINO alla posizione utente; se manca la posizione o le coordinate, il piu vicino come data
+  useEffect(() => {
+    if (!eventiRaw.length) return
+    const t0 = new Date(); t0.setHours(0, 0, 0, 0)
+    const conCoord = eventiRaw.filter(e => e.lat !== null && e.lng !== null)
+    let scelto = null as null | { titolo: string; d: Date }
+    if (userPos && conCoord.length) {
+      scelto = [...conCoord]
+        .sort((a, b) => distanzaKm(userPos.lat, userPos.lng, a.lat as number, a.lng as number) - distanzaKm(userPos.lat, userPos.lng, b.lat as number, b.lng as number))[0]
+    } else {
+      scelto = [...eventiRaw].sort((a, b) => a.d.getTime() - b.d.getTime())[0]
+    }
+    if (scelto) {
+      const diff = Math.round((scelto.d.getTime() - t0.getTime()) / 86400000)
+      const quando = diff === 0 ? 'oggi' : diff === 1 ? 'domani' : `${scelto.d.getDate()} ${MESI[scelto.d.getMonth()].slice(0, 3)}`
+      setProssimo({ titolo: scelto.titolo, quando })
+    }
+  }, [userPos, eventiRaw])
 
   const pieno = eventi ? Math.min(100, eventi) : 0
   const rigaEvento = prossimo
