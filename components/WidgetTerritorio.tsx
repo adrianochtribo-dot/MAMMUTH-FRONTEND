@@ -4,10 +4,11 @@ import { useState, useEffect } from 'react'
 
 const SUPABASE_URL = 'https://pwfsuefyiiwnltikcdho.supabase.co'
 const SUPABASE_KEY = 'sb_publishable_5sHvYKX3YL7RI_RwpJK9FQ_-A2G7H63'
+const ACCENT = '#E83E7C'
 
 const MESI = ['gennaio','febbraio','marzo','aprile','maggio','giugno','luglio','agosto','settembre','ottobre','novembre','dicembre']
+const GIORNI = ['domenica','luned\u00EC','marted\u00EC','mercoled\u00EC','gioved\u00EC','venerd\u00EC','sabato']
 
-// Canali da cui arrivano i micro-eventi (ingestione)
 const CANALI = [
   { label: 'WhatsApp', tipo: 'wa' },
   { label: 'Instagram', tipo: 'ig' },
@@ -17,7 +18,6 @@ const CANALI = [
   { label: 'YouTube', tipo: 'yt' },
 ]
 
-// Fonti territoriali che inviano eventi
 const FONTI = [
   { label: 'Comuni', tipo: 'comune' },
   { label: 'Pro Loco', tipo: 'proloco' },
@@ -45,11 +45,13 @@ export default function WidgetTerritorio() {
   const [meteo, setMeteo] = useState<{ temp: number; perc: number; desc: string } | null>(null)
   const [meteoErr, setMeteoErr] = useState(false)
   const [eventi, setEventi] = useState<number | null>(null)
+  const [prossimo, setProssimo] = useState<{ titolo: string; quando: string } | null>(null)
 
   const oggi = new Date()
-  const giorno = oggi.toLocaleDateString('it-IT', { weekday: 'long' })
-  const giornoCap = giorno.charAt(0).toUpperCase() + giorno.slice(1)
-  const dataBreve = `${oggi.getDate()} ${MESI[oggi.getMonth()].slice(0,3)}`
+  const giornoCap = GIORNI[oggi.getDay()].charAt(0).toUpperCase() + GIORNI[oggi.getDay()].slice(1)
+  const giornoAbbr = GIORNI[oggi.getDay()].slice(0, 3)
+  const giornoAbbrCap = giornoAbbr.charAt(0).toUpperCase() + giornoAbbr.slice(1)
+  const dataLine = `${giornoAbbrCap}, ${oggi.getDate()} ${MESI[oggi.getMonth()].slice(0, 3)}`
   const meseNome = MESI[oggi.getMonth()].charAt(0).toUpperCase() + MESI[oggi.getMonth()].slice(1)
   const settimana = Array.from({ length: 6 }, (_, i) => {
     const d = new Date(oggi)
@@ -80,21 +82,46 @@ export default function WidgetTerritorio() {
       headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}` },
     })
       .then(r => r.json())
-      .then(d => { if (Array.isArray(d)) setEventi(d.length) })
+      .then(d => {
+        if (!Array.isArray(d)) return
+        setEventi(d.length)
+        // prossimo evento reale: cerca titolo e data tra i nomi colonna possibili
+        const t0 = new Date(); t0.setHours(0, 0, 0, 0)
+        const lista = d
+          .map((e: any) => ({
+            titolo: e.titolo || e.nome || e.titolo_evento || e.name || '',
+            raw: e.data_inizio || e.data || e.data_evento || e.inizio || '',
+          }))
+          .filter((e: any) => e.titolo && e.raw)
+          .map((e: any) => ({ titolo: e.titolo, d: new Date(e.raw) }))
+          .filter((e: any) => !isNaN(e.d.getTime()) && e.d >= t0)
+          .sort((a: any, b: any) => a.d.getTime() - b.d.getTime())
+        if (lista.length) {
+          const ev = lista[0]
+          const diff = Math.round((ev.d.getTime() - t0.getTime()) / 86400000)
+          const quando = diff === 0 ? 'oggi' : diff === 1 ? 'domani' : `${ev.d.getDate()} ${MESI[ev.d.getMonth()].slice(0, 3)}`
+          setProssimo({ titolo: ev.titolo, quando })
+        }
+      })
       .catch(() => {})
 
     return () => { clearInterval(id); clearTimeout(to) }
   }, [])
 
   const pieno = eventi ? Math.min(100, eventi) : 0
+  const rigaEvento = prossimo
+    ? `${prossimo.titolo} \u2022 ${prossimo.quando}`
+    : `Sermoneta \u2022 oggi`
 
   const voceStyle = { display: 'flex', alignItems: 'center', gap: '14px', padding: '10px 4px', color: '#fff', textDecoration: 'none', borderBottom: '1px solid rgba(255,255,255,0.06)' } as const
   const cerchioStyle = { width: '36px', height: '36px', borderRadius: '50%', border: '1px solid rgba(255,255,255,0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 } as const
+  const headStyle = { fontSize: '1.35rem', fontWeight: 700, color: '#fff', marginBottom: '6px' } as const
+  const subStyle = { fontSize: '.82rem', color: 'rgba(255,255,255,0.5)', lineHeight: 1.45 } as const
 
   return (
     <aside
       style={{
-        backgroundColor: '#1a1a1a',
+        backgroundColor: '#161616',
         backgroundImage: 'radial-gradient(circle at 1px 1px, rgba(255,255,255,0.04) 1px, transparent 0)',
         backgroundSize: '14px 14px',
         color: '#fff',
@@ -102,46 +129,57 @@ export default function WidgetTerritorio() {
         padding: '40px 28px',
         display: 'flex',
         flexDirection: 'column',
-        gap: '22px',
-        width: '290px',
+        gap: '26px',
+        width: '300px',
         height: '100vh',
         overflowY: 'auto',
       }}
     >
+      {/* righe data + prossimo evento (dinamiche) */}
       <div>
-        <div style={{ fontSize: '.78rem', color: 'rgba(255,255,255,0.6)' }}>{dataBreve}</div>
-        <div style={{ fontSize: '.78rem', color: 'rgba(255,255,255,0.45)', marginTop: '2px' }}>{'Sermoneta \u00B7 oggi'}</div>
+        <div style={{ fontSize: '1.05rem', fontWeight: 700 }}>{dataLine}</div>
+        <div style={{ fontSize: '1.05rem', fontWeight: 700, marginTop: '4px', display: 'flex', gap: '6px' }}>
+          <span style={{ color: ACCENT }}>{'\u2022'}</span>
+          <span style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{prossimo ? prossimo.titolo : 'Sermoneta'} <span style={{ color: 'rgba(255,255,255,0.55)', fontWeight: 500 }}>{prossimo ? prossimo.quando : 'oggi'}</span></span>
+        </div>
       </div>
 
-      <div style={{ fontFamily: "'Snell Roundhand','Brush Script MT',cursive", fontStyle: 'italic', fontWeight: 700, fontSize: 'clamp(2.4rem,4vw,3.4rem)', lineHeight: 1, color: '#E879A0' }}>
+      {/* giorno grande corsivo (dinamico) */}
+      <div style={{ fontFamily: "'Snell Roundhand','Brush Script MT',cursive", fontStyle: 'italic', fontWeight: 700, fontSize: 'clamp(3rem,6vw,4.4rem)', lineHeight: 1, color: ACCENT }}>
         {giornoCap}
       </div>
 
+      {/* Meteo (dinamico) */}
       <div>
-        <div style={{ fontSize: '1rem', fontWeight: 500, marginBottom: '6px' }}>Meteo</div>
-        <div style={{ fontSize: '.8rem', color: 'rgba(255,255,255,0.55)', lineHeight: 1.5 }}>
+        <div style={headStyle}>Meteo</div>
+        <div style={subStyle}>
           {meteo ? `A Sermoneta ${meteo.desc}, ${meteo.temp}\u00B0C. Percepiti ${meteo.perc}\u00B0C.` : meteoErr ? 'Meteo non disponibile.' : 'Caricamento meteo\u2026'}
         </div>
       </div>
 
+      {/* mese + settimana + orologio live (dinamici) */}
       <div>
-        <div style={{ fontSize: '1rem', fontWeight: 500, marginBottom: '10px' }}>{meseNome}</div>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <div style={headStyle}>{meseNome}</div>
+        <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between' }}>
           {settimana.map((d, i) => (
-            <span key={i} style={{ fontSize: '.88rem', color: d.oggi ? '#fff' : 'rgba(255,255,255,0.3)', fontWeight: d.oggi ? 600 : 400, borderBottom: d.oggi ? '2px solid #E879A0' : 'none', paddingBottom: '2px' }}>{d.n}</span>
+            <span key={i} style={{ fontSize: d.oggi ? '1.4rem' : '.92rem', color: d.oggi ? '#fff' : 'rgba(255,255,255,0.32)', fontWeight: d.oggi ? 700 : 400 }}>{d.n}</span>
           ))}
         </div>
-        <div style={{ borderTop: '1px solid rgba(255,255,255,0.12)', marginTop: '10px', paddingTop: '6px', textAlign: 'right', fontSize: '1.05rem', fontWeight: 600, fontVariantNumeric: 'tabular-nums' }}>{ora}</div>
+        <div style={{ position: 'relative', marginTop: '16px' }}>
+          <div style={{ borderTop: '1px solid rgba(255,255,255,0.22)' }} />
+          <span style={{ position: 'absolute', right: 0, top: '50%', transform: 'translateY(-50%)', background: '#161616', paddingLeft: '10px', fontSize: '1.3rem', fontWeight: 700, fontVariantNumeric: 'tabular-nums' }}>{ora}</span>
+        </div>
       </div>
 
+      {/* Catalogo (dinamico) */}
       <div>
-        <div style={{ fontSize: '1rem', fontWeight: 500, marginBottom: '6px' }}>Catalogo</div>
-        <div style={{ fontSize: '.8rem', color: 'rgba(255,255,255,0.55)', marginBottom: '10px' }}>
-          {eventi !== null ? `${eventi} eventi certificati.` : 'Conteggio eventi\u2026'}
+        <div style={headStyle}>Catalogo</div>
+        <div style={{ ...subStyle, marginBottom: '12px' }}>
+          {eventi !== null ? `${eventi} eventi certificati nel territorio.` : 'Conteggio eventi\u2026'}
         </div>
-        <div style={{ position: 'relative', height: '4px', borderRadius: '3px', background: 'rgba(255,255,255,0.12)' }}>
-          <div style={{ position: 'absolute', left: 0, top: 0, height: '4px', borderRadius: '3px', width: `${pieno}%`, background: '#E879A0', transition: 'width 1s ease' }} />
-          <div style={{ position: 'absolute', top: '-3.5px', left: `${pieno}%`, width: '11px', height: '11px', borderRadius: '50%', background: '#fff', transform: 'translateX(-50%)' }} />
+        <div style={{ position: 'relative', height: '4px', borderRadius: '3px', background: 'rgba(255,255,255,0.14)' }}>
+          <div style={{ position: 'absolute', left: 0, top: 0, height: '4px', borderRadius: '3px', width: `${pieno}%`, background: ACCENT, transition: 'width 1s ease' }} />
+          <div style={{ position: 'absolute', top: '-4px', left: `${pieno}%`, width: '12px', height: '12px', borderRadius: '50%', background: '#fff', transform: 'translateX(-50%)' }} />
         </div>
       </div>
 
