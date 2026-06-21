@@ -8,7 +8,7 @@ const ACCENT = '#E83E7C'
 const MILK = '#FAF7F2'
 
 const MESI = ['gennaio','febbraio','marzo','aprile','maggio','giugno','luglio','agosto','settembre','ottobre','novembre','dicembre']
-const GIORNI = ['domenica','luned\u00EC','marted\u00EC','mercoled\u00EC','gioved\u00EC','venerd\u00EC','sabato']
+const GIORNI = ['domenica','lunedì','martedì','mercoledì','giovedì','venerdì','sabato']
 
 // distanza in km tra due coordinate (haversine)
 function distanzaKm(lat1: number, lng1: number, lat2: number, lng2: number) {
@@ -75,9 +75,10 @@ export default function WidgetTerritorio() {
     const tick = () => setOra(new Date().toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' }))
     tick()
     const id = setInterval(tick, 1000)
+    let watchId: number | null = null
 
-    // meteo sulla posizione reale; persisti=true salva la scelta (GPS o manuale) sul dispositivo
-    const caricaMeteo = (lat: number, lng: number, nomeNoto?: string, persisti?: boolean) => {
+    // meteo sulla posizione reale; se nomeNoto manca, ricava il comune dalle coordinate
+    const caricaMeteo = (lat: number, lng: number, nomeNoto?: string) => {
       setUserPos({ lat, lng })
       const ctrl = new AbortController()
       const to = setTimeout(() => ctrl.abort(), 6000)
@@ -90,7 +91,6 @@ export default function WidgetTerritorio() {
           const desc = code === 0 ? 'sereno' : code < 4 ? 'poco nuvoloso' : code < 50 ? 'nuvoloso' : code < 70 ? 'pioggia' : 'variabile'
           const set = (luogo: string) => {
             setMeteo({ temp: Math.round(d.current.temperature_2m), perc: Math.round(d.current.apparent_temperature), desc, luogo })
-            if (persisti) { try { localStorage.setItem('mammuth_geo', JSON.stringify({ lat, lng, nome: luogo })) } catch (e) {} }
           }
           if (nomeNoto) { set(nomeNoto); return }
           // ricava il nome del comune dalle coordinate
@@ -125,20 +125,27 @@ export default function WidgetTerritorio() {
         })
         .catch(() => { clearTimeout(to); provaProvider(i + 1) })
     }
-    // 0) scelta salvata sul dispositivo  1) GPS preciso (col permesso, salva)  2) ripiego IP
-    let salvato: { lat: number; lng: number; nome: string } | null = null
-    try { const s = localStorage.getItem('mammuth_geo'); if (s) salvato = JSON.parse(s) } catch (e) {}
-    if (salvato && typeof salvato.lat === 'number' && typeof salvato.lng === 'number') {
-      caricaMeteo(salvato.lat, salvato.lng, salvato.nome)
-    } else if (typeof navigator !== 'undefined' && navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(
-        pos => caricaMeteo(pos.coords.latitude, pos.coords.longitude, undefined, true),
-        () => provaProvider(0),
-        { enableHighAccuracy: true, timeout: 12000, maximumAge: 300000 }
+
+    // POSIZIONE IN TEMPO REALE: il GPS e la priorita assoluta.
+    // watchPosition chiede il permesso UNA sola volta; concesso, il browser lo
+    // ricorda su questo dominio e aggiorna da solo la posizione mentre l'utente
+    // si sposta, senza altri popup. L'IP e solo un ripiego se il permesso viene
+    // negato o il dispositivo non ha il GPS.
+    let gpsOk = false
+    if (typeof navigator !== 'undefined' && navigator.geolocation) {
+      watchId = navigator.geolocation.watchPosition(
+        pos => {
+          gpsOk = true
+          // niente nome fisso: il reverse-geocoding ricalcola la citta a ogni spostamento
+          caricaMeteo(pos.coords.latitude, pos.coords.longitude)
+        },
+        () => { if (!gpsOk) provaProvider(0) },
+        { enableHighAccuracy: true, timeout: 15000, maximumAge: 60000 }
       )
     } else {
       provaProvider(0)
     }
+
     fetch(`${SUPABASE_URL}/rest/v1/eventi_catalogo_pubblico?select=*`, {
       headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}` },
     })
@@ -161,7 +168,10 @@ export default function WidgetTerritorio() {
       })
       .catch(() => {})
 
-    return () => { clearInterval(id) }
+    return () => {
+      clearInterval(id)
+      if (watchId !== null && typeof navigator !== 'undefined' && navigator.geolocation) navigator.geolocation.clearWatch(watchId)
+    }
   }, [])
 
   // sceglie l'evento piu VICINO alla posizione utente; se manca la posizione o le coordinate, il piu vicino come data
@@ -223,7 +233,7 @@ export default function WidgetTerritorio() {
       <div>
         <div style={headStyle}>Meteo</div>
         <div style={subStyle}>
-          {meteo ? `A ${meteo.luogo} ${meteo.desc}, ${meteo.temp}\u00B0C. Percepiti ${meteo.perc}\u00B0C.` : meteoErr ? 'Meteo non disponibile.' : 'Caricamento meteo\u2026'}
+          {meteo ? `A ${meteo.luogo} ${meteo.desc}, ${meteo.temp}°C. Percepiti ${meteo.perc}°C.` : meteoErr ? 'Meteo non disponibile.' : 'Caricamento meteo…'}
         </div>
       </div>
 
@@ -245,7 +255,7 @@ export default function WidgetTerritorio() {
       <div>
         <div style={headStyle}>Catalogo</div>
         <div style={{ ...subStyle, marginBottom: '12px' }}>
-          {eventi !== null ? `${eventi} eventi certificati nel territorio.` : 'Conteggio eventi\u2026'}
+          {eventi !== null ? `${eventi} eventi certificati nel territorio.` : 'Conteggio eventi…'}
         </div>
         <div style={{ position: 'relative', height: '4px', borderRadius: '3px', background: 'rgba(250,247,242,0.14)' }}>
           <div style={{ position: 'absolute', left: 0, top: 0, height: '4px', borderRadius: '3px', width: `${pieno}%`, background: ACCENT, transition: 'width 1s ease' }} />
