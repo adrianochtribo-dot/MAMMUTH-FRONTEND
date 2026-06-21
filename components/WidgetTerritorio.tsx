@@ -10,6 +10,10 @@ const MILK = '#FAF7F2'
 const MESI = ['gennaio','febbraio','marzo','aprile','maggio','giugno','luglio','agosto','settembre','ottobre','novembre','dicembre']
 const GIORNI = ['domenica','lunedì','martedì','mercoledì','giovedì','venerdì','sabato']
 
+// Meteo fisso sul territorio pilota: niente geolocalizzazione, niente popup,
+// mai una citta sbagliata. Per cambiare territorio basta modificare qui.
+const TERRITORIO = { lat: 41.55, lng: 12.99, nome: 'Sermoneta' }
+
 // distanza in km tra due coordinate (haversine)
 function distanzaKm(lat1: number, lng1: number, lat2: number, lng2: number) {
   const R = 6371
@@ -75,10 +79,9 @@ export default function WidgetTerritorio() {
     const tick = () => setOra(new Date().toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' }))
     tick()
     const id = setInterval(tick, 1000)
-    let watchId: number | null = null
 
-    // meteo sulla posizione reale; se nomeNoto manca, ricava il comune dalle coordinate
-    const caricaMeteo = (lat: number, lng: number, nomeNoto?: string) => {
+    // meteo del territorio fisso: nome gia noto, nessuna geolocalizzazione
+    const caricaMeteo = (lat: number, lng: number, nomeNoto: string) => {
       setUserPos({ lat, lng })
       const ctrl = new AbortController()
       const to = setTimeout(() => ctrl.abort(), 6000)
@@ -89,62 +92,15 @@ export default function WidgetTerritorio() {
           if (!d.current) { setMeteoErr(true); return }
           const code = d.current.weather_code
           const desc = code === 0 ? 'sereno' : code < 4 ? 'poco nuvoloso' : code < 50 ? 'nuvoloso' : code < 70 ? 'pioggia' : 'variabile'
-          const set = (luogo: string) => {
-            setMeteo({ temp: Math.round(d.current.temperature_2m), perc: Math.round(d.current.apparent_temperature), desc, luogo })
-          }
-          if (nomeNoto) { set(nomeNoto); return }
-          // ricava il nome del comune dalle coordinate
-          fetch(`https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${lat}&longitude=${lng}&localityLanguage=it`)
-            .then(r => r.json())
-            .then(g => set(g.city || g.locality || g.principalSubdivision || 'zona attuale'))
-            .catch(() => set('zona attuale'))
+          setMeteo({ temp: Math.round(d.current.temperature_2m), perc: Math.round(d.current.apparent_temperature), desc, luogo: nomeNoto })
         })
         .catch(() => { setMeteoErr(true) })
     }
 
-
-    // rileva la posizione dall'IP della connessione, provando piu servizi in cascata; nessun permesso, nessun popup
-    const PROVIDER: { url: string; pick: (g: any) => { lat: number; lng: number; city: string } | null }[] = [
-      { url: 'https://ipwho.is/', pick: g => (g && g.success !== false && g.latitude) ? { lat: Number(g.latitude), lng: Number(g.longitude), city: g.city || g.region || '' } : null },
-      { url: 'https://get.geojs.io/v1/ip/geo.json', pick: g => (g && g.latitude) ? { lat: Number(g.latitude), lng: Number(g.longitude), city: g.city || g.region || '' } : null },
-      { url: 'https://ipapi.co/json/', pick: g => (g && g.latitude) ? { lat: Number(g.latitude), lng: Number(g.longitude), city: g.city || g.region || '' } : null },
-      { url: 'https://freeipapi.com/api/json', pick: g => (g && g.latitude) ? { lat: Number(g.latitude), lng: Number(g.longitude), city: g.cityName || g.regionName || '' } : null },
-    ]
-    const provaProvider = (i: number) => {
-      if (i >= PROVIDER.length) { caricaMeteo(41.55, 12.99, 'Sermoneta'); return }
-      const p = PROVIDER[i]
-      const ctrl = new AbortController()
-      const to = setTimeout(() => ctrl.abort(), 5000)
-      fetch(p.url, { signal: ctrl.signal })
-        .then(r => r.json())
-        .then(g => {
-          clearTimeout(to)
-          const res = p.pick(g)
-          if (res && !isNaN(res.lat) && !isNaN(res.lng)) caricaMeteo(res.lat, res.lng, res.city || 'zona attuale')
-          else provaProvider(i + 1)
-        })
-        .catch(() => { clearTimeout(to); provaProvider(i + 1) })
-    }
-
-    // POSIZIONE IN TEMPO REALE: il GPS e la priorita assoluta.
-    // watchPosition chiede il permesso UNA sola volta; concesso, il browser lo
-    // ricorda su questo dominio e aggiorna da solo la posizione mentre l'utente
-    // si sposta, senza altri popup. L'IP e solo un ripiego se il permesso viene
-    // negato o il dispositivo non ha il GPS.
-    let gpsOk = false
-    if (typeof navigator !== 'undefined' && navigator.geolocation) {
-      watchId = navigator.geolocation.watchPosition(
-        pos => {
-          gpsOk = true
-          // niente nome fisso: il reverse-geocoding ricalcola la citta a ogni spostamento
-          caricaMeteo(pos.coords.latitude, pos.coords.longitude)
-        },
-        () => { if (!gpsOk) provaProvider(0) },
-        { enableHighAccuracy: true, timeout: 15000, maximumAge: 60000 }
-      )
-    } else {
-      provaProvider(0)
-    }
+    // METEO FISSO SUL TERRITORIO (Sermoneta). Nessun GPS, nessun IP, nessun popup:
+    // il widget mostra sempre il meteo del territorio degli eventi, mai quello del
+    // visitatore. Per cambiare territorio basta modificare la costante TERRITORIO.
+    caricaMeteo(TERRITORIO.lat, TERRITORIO.lng, TERRITORIO.nome)
 
     fetch(`${SUPABASE_URL}/rest/v1/eventi_catalogo_pubblico?select=*`, {
       headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}` },
@@ -170,7 +126,6 @@ export default function WidgetTerritorio() {
 
     return () => {
       clearInterval(id)
-      if (watchId !== null && typeof navigator !== 'undefined' && navigator.geolocation) navigator.geolocation.clearWatch(watchId)
     }
   }, [])
 
