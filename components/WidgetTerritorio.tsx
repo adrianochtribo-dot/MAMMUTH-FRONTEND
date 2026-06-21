@@ -14,6 +14,66 @@ const GIORNI = ['domenica','lunedì','martedì','mercoledì','giovedì','venerd�
 // mai una citta sbagliata. Per cambiare territorio basta modificare qui.
 const TERRITORIO = { lat: 41.55, lng: 12.99, nome: 'Sermoneta' }
 
+// ============================================================================
+// CONFIG INVIO EVENTI — deep link Click-to-Chat verso i canali ufficiali Mammuth.
+// Compila qui i tuoi handle UNA volta sola. Lascia '' per disattivare una voce.
+// ============================================================================
+const INVIO = {
+  whatsappNumero: '39XXXXXXXXXX',   // numero WhatsApp Mammuth, formato internazionale SENZA + (es. 393331234567)
+  telegramUser: 'mammuth_events',   // @username Telegram (bot o canale), senza @
+  messengerPage: 'mammuth.events',  // username/ID della Pagina Facebook
+  instagramUser: 'mammuth.events',  // username Instagram, senza @
+  tiktokUser: 'mammuth.events',     // username TikTok, senza @
+  youtubeUser: '',                  // handle YouTube (es. mammuthevents), senza @ — '' = nascosto
+  emailEnti: 'eventi@mammuth.events', // email per gli enti che inviano il feed del calendario
+}
+
+// Messaggio precompilato per gli utenti privati (WhatsApp lo apre gia scritto).
+const TESTO_INVIO = `Ciao Mammuth! Voglio segnalare un evento del territorio.
+
+- Titolo:
+- Comune / luogo:
+- Data e ora:
+- Breve descrizione:
+
+(allego volentieri la locandina)`
+
+// Costruisce il deep link giusto per ogni canale "Invia un evento".
+// wa.me / m.me / ig.me sono gli short-link ufficiali che aprono direttamente la chat.
+function linkCanale(tipo: string): string {
+  switch (tipo) {
+    // WhatsApp: apre la chat col numero Mammuth E il testo gia precompilato
+    case 'wa': return INVIO.whatsappNumero ? `https://wa.me/${INVIO.whatsappNumero}?text=${encodeURIComponent(TESTO_INVIO)}` : '#'
+    // Telegram: apre la chat/bot. Nota: il testo precompilato su Telegram funziona
+    // solo con un bot (parametro ?start=), non con un account/canale normale.
+    case 'tg': return INVIO.telegramUser ? `https://t.me/${INVIO.telegramUser}` : '#'
+    // Messenger: apre la chat con la Pagina Facebook
+    case 'fb': return INVIO.messengerPage ? `https://m.me/${INVIO.messengerPage}` : '#'
+    // Instagram: ig.me apre direttamente il DM con l'account
+    case 'ig': return INVIO.instagramUser ? `https://ig.me/m/${INVIO.instagramUser}` : '#'
+    // TikTok: non esiste deep link al DM, si apre il profilo ufficiale
+    case 'tk': return INVIO.tiktokUser ? `https://www.tiktok.com/@${INVIO.tiktokUser}` : '#'
+    // YouTube: profilo/canale ufficiale
+    case 'yt': return INVIO.youtubeUser ? `https://www.youtube.com/@${INVIO.youtubeUser}` : '#'
+    default: return '#'
+  }
+}
+
+// Enti (Comuni/Pro Loco/Diocesi): inviano via email la URL del loro calendario
+// istituzionale (iCal .ics / RSS), pronta per l'ingestione automatica lato backend.
+function linkFonte(ente: string): string {
+  const subject = encodeURIComponent(`Mammuth — collega il calendario eventi (${ente})`)
+  const body = encodeURIComponent(`Salve,
+vorrei collegare il calendario eventi del nostro ente a Mammuth.
+
+- Ente: ${ente}
+- Comune:
+- URL del calendario (iCal .ics / RSS / pagina eventi):
+
+Grazie.`)
+  return `mailto:${INVIO.emailEnti}?subject=${subject}&body=${body}`
+}
+
 // distanza in km tra due coordinate (haversine)
 function distanzaKm(lat1: number, lng1: number, lat2: number, lng2: number) {
   const R = 6371
@@ -218,22 +278,22 @@ export default function WidgetTerritorio() {
         </div>
       </div>
 
-      {/* CANALI INGESTIONE - da qui arrivano i micro-eventi */}
+      {/* CANALI INGESTIONE - utenti privati: deep link Click-to-Chat */}
       <div>
         <div style={eyebrowStyle}>Invia un evento</div>
         {CANALI.map(({ label, tipo }) => (
-          <a key={label} href="https://adrianochtribo-dot.github.io/MAMMUTH-EV/developer/console.html" target="_blank" style={voceStyle}>
+          <a key={label} href={linkCanale(tipo)} target="_blank" rel="noopener noreferrer" style={voceStyle}>
             <span style={cerchioStyle}><Icona tipo={tipo} /></span>
             <span style={{ fontSize: '.9rem', fontWeight: 300 }}>{label}</span>
           </a>
         ))}
       </div>
 
-      {/* FONTI TERRITORIALI */}
+      {/* FONTI TERRITORIALI - enti: invio della URL del calendario via email */}
       <div>
         <div style={eyebrowStyle}>Fonti del territorio</div>
         {FONTI.map(({ label, tipo }) => (
-          <a key={label} href="https://adrianochtribo-dot.github.io/MAMMUTH-EV/developer/console.html" target="_blank" style={voceStyle}>
+          <a key={label} href={linkFonte(label)} style={voceStyle}>
             <span style={cerchioStyle}><Icona tipo={tipo} /></span>
             <span style={{ fontSize: '.9rem', fontWeight: 300 }}>{label}</span>
           </a>
