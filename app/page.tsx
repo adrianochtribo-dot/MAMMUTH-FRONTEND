@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import MappaEventi from '@/components/MappaEventi'
 import WidgetTerritorio from '@/components/WidgetTerritorio'
+import MammuthCommunity from '@/components/MammuthCommunity'
 
 export default function Home() {
   return (
@@ -19,6 +20,7 @@ export default function Home() {
           <span className="font-semibold text-sm tracking-widest" style={{color:'#1D1D1F'}}>MAMMUTH•EVENTS™</span>
           <div className="flex gap-6 text-xs" style={{color:'rgba(29,29,31,0.6)'}}>
             <Link href="#mappa" className="hover:opacity-100 transition" style={{color:'inherit'}}>Mappa</Link>
+            <Link href="#community" className="hover:opacity-100 transition" style={{color:'inherit'}}>Community</Link>
             <Link href="#architettura" className="hover:opacity-100 transition" style={{color:'inherit'}}>Architettura</Link>
             <a href="https://adrianochtribo-dot.github.io/MAMMUTH-EV/developer/developer-index.html" target="_blank" className="hover:opacity-100 transition" style={{color:'inherit'}}>Developer Portal</a>
           </div>
@@ -95,6 +97,11 @@ export default function Home() {
           68 eventi verificati ATLAS•EVENTA™ — Sermoneta, Bassiano, Sezze, Ponza (Provincia di Latina) — verità territoriale, zero dati inventati.
         </p>
         <MappaEventi />
+      </section>
+
+      {/* WE MAMMUTH COMMUNITY — mappa di copertura delle Sentinelle */}
+      <section id="community" className="max-w-5xl mx-auto px-6 py-16">
+        <MammuthCommunity />
       </section>
 
       {/* BENTO GRID */}
