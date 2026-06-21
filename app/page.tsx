@@ -13,9 +13,9 @@ export default function Home() {
       {/* HOME — invariata, con margine sinistro per non finire sotto il widget */}
       <div className="min-h-screen font-sans antialiased overflow-x-hidden lg:ml-[280px]" style={{backgroundColor:'#F5F5F7',color:'#1D1D1F'}}>
 
-      {/* NAVBAR */}
+      {/* NAVBAR — allineata alla barra: parte dopo i 280px del widget, non ci sfora sopra */}
       <nav className="sticky top-0 z-50 backdrop-blur-md border-b" style={{backgroundColor:'rgba(245,245,247,0.8)',borderColor:'rgba(0,0,0,0.08)'}}>
-        <div className="max-w-5xl mx-auto px-6 h-12 flex items-center justify-between">
+        <div className="mx-auto px-6 h-12 flex items-center justify-between" style={{maxWidth:'64rem'}}>
           <span className="font-semibold text-sm tracking-widest" style={{color:'#1D1D1F'}}>MAMMUTH•EVENTS™</span>
           <div className="flex gap-6 text-xs" style={{color:'rgba(29,29,31,0.6)'}}>
             <Link href="#mappa" className="hover:opacity-100 transition" style={{color:'inherit'}}>Mappa</Link>
