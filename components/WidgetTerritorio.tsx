@@ -5,6 +5,7 @@ import { useState, useEffect } from 'react'
 const SUPABASE_URL = 'https://pwfsuefyiiwnltikcdho.supabase.co'
 const SUPABASE_KEY = 'sb_publishable_5sHvYKX3YL7RI_RwpJK9FQ_-A2G7H63'
 const ACCENT = '#E83E7C'
+const MILK = '#FAF7F2'
 
 const MESI = ['gennaio','febbraio','marzo','aprile','maggio','giugno','luglio','agosto','settembre','ottobre','novembre','dicembre']
 const GIORNI = ['domenica','luned\u00EC','marted\u00EC','mercoled\u00EC','gioved\u00EC','venerd\u00EC','sabato']
@@ -34,14 +35,14 @@ const FONTI = [
 ]
 
 function Icona({ tipo }: { tipo: string }) {
-  const c = { width: 20, height: 20, fill: 'none', stroke: '#fff', strokeWidth: 1.4, strokeLinecap: 'round' as const, strokeLinejoin: 'round' as const }
+  const c = { width: 20, height: 20, fill: 'none', stroke: MILK, strokeWidth: 1.4, strokeLinecap: 'round' as const, strokeLinejoin: 'round' as const }
   switch (tipo) {
-    case 'wa': return <svg viewBox="0 0 24 24" {...c}><path d="M21 11.5a8.38 8.38 0 0 1-8.5 8.5 8.5 8.5 0 0 1-3.8-.9L3 21l1.9-5.7A8.5 8.5 0 1 1 21 11.5z"/><path d="M9 9.5c0 3 2.5 5.5 5.5 5.5l.5-1.5-2-1-1 1c-1-.5-2-1.5-2.5-2.5l1-1-1-2z" fill="#fff" stroke="none"/></svg>
-    case 'ig': return <svg viewBox="0 0 24 24" {...c}><rect x="4" y="4" width="16" height="16" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17" cy="7" r=".8" fill="#fff"/></svg>
-    case 'fb': return <svg viewBox="0 0 24 24" {...c}><path d="M14 8h2V5h-2c-1.7 0-3 1.3-3 3v2H9v3h2v6h3v-6h2.5l.5-3H14V8z" fill="#fff" stroke="none"/></svg>
+    case 'wa': return <svg viewBox="0 0 24 24" {...c}><path d="M21 11.5a8.38 8.38 0 0 1-8.5 8.5 8.5 8.5 0 0 1-3.8-.9L3 21l1.9-5.7A8.5 8.5 0 1 1 21 11.5z"/><path d="M9 9.5c0 3 2.5 5.5 5.5 5.5l.5-1.5-2-1-1 1c-1-.5-2-1.5-2.5-2.5l1-1-1-2z" fill={MILK} stroke="none"/></svg>
+    case 'ig': return <svg viewBox="0 0 24 24" {...c}><rect x="4" y="4" width="16" height="16" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17" cy="7" r=".8" fill={MILK} stroke="none"/></svg>
+    case 'fb': return <svg viewBox="0 0 24 24" {...c}><path d="M14 8h2V5h-2c-1.7 0-3 1.3-3 3v2H9v3h2v6h3v-6h2.5l.5-3H14V8z" fill={MILK} stroke="none"/></svg>
     case 'tg': return <svg viewBox="0 0 24 24" {...c}><path d="M21 5L3 12l5 2 2 5 3-3 4 3 4-14z"/><path d="M8 14l9-6-6 7" fill="none"/></svg>
     case 'tk': return <svg viewBox="0 0 24 24" {...c}><path d="M9 18V6l9-2v10"/><circle cx="6.5" cy="18" r="2.5"/><circle cx="15.5" cy="14" r="2.5"/></svg>
-    case 'yt': return <svg viewBox="0 0 24 24" {...c}><rect x="3" y="6" width="18" height="12" rx="3"/><path d="M10 9.5l5 2.5-5 2.5z" fill="#fff" stroke="none"/></svg>
+    case 'yt': return <svg viewBox="0 0 24 24" {...c}><rect x="3" y="6" width="18" height="12" rx="3"/><path d="M10 9.5l5 2.5-5 2.5z" fill={MILK} stroke="none"/></svg>
     case 'comune': return <svg viewBox="0 0 24 24" {...c}><path d="M4 21h16M5 21V10l7-5 7 5v11M9 21v-6h6v6"/></svg>
     case 'proloco': return <svg viewBox="0 0 24 24" {...c}><path d="M12 3l8 4v6c0 4-3.5 7-8 8-4.5-1-8-4-8-8V7l8-4z"/><path d="M9 12l2 2 4-4"/></svg>
     case 'diocesi': return <svg viewBox="0 0 24 24" {...c}><path d="M12 3v18M8 7h8M6 21h12M9 12l-3 9M15 12l3 9"/></svg>
@@ -184,19 +185,21 @@ export default function WidgetTerritorio() {
 
   const pieno = eventi ? Math.min(100, eventi) : 0
 
-  const voceStyle = { display: 'flex', alignItems: 'center', gap: '14px', padding: '10px 4px', color: '#fff', textDecoration: 'none', borderBottom: '1px solid rgba(255,255,255,0.06)' } as const
-  const cerchioStyle = { width: '36px', height: '36px', borderRadius: '50%', border: '1px solid rgba(255,255,255,0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 } as const
-  const headStyle = { fontSize: '1.35rem', fontWeight: 700, color: '#fff', marginBottom: '6px' } as const
-  const subStyle = { fontSize: '.82rem', color: 'rgba(255,255,255,0.5)', lineHeight: 1.45 } as const
+  // testi bianco latte, pesi leggeri uniformati al lato destro della landing
+  const voceStyle = { display: 'flex', alignItems: 'center', gap: '14px', padding: '10px 4px', color: MILK, textDecoration: 'none', borderBottom: '1px solid rgba(250,247,242,0.08)' } as const
+  const cerchioStyle = { width: '36px', height: '36px', borderRadius: '50%', border: '1px solid rgba(250,247,242,0.28)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 } as const
+  const headStyle = { fontSize: '1.15rem', fontWeight: 500, letterSpacing: '-0.01em', color: MILK, marginBottom: '6px' } as const
+  const subStyle = { fontSize: '.82rem', fontWeight: 300, color: 'rgba(250,247,242,0.55)', lineHeight: 1.5 } as const
+  const eyebrowStyle = { fontSize: '.58rem', letterSpacing: '.18em', color: 'rgba(250,247,242,0.4)', textTransform: 'uppercase' as const, marginBottom: '6px' } as const
 
   return (
     <aside
       style={{
         backgroundColor: '#161616',
-        backgroundImage: 'radial-gradient(circle at 1px 1px, rgba(255,255,255,0.04) 1px, transparent 0)',
+        backgroundImage: 'radial-gradient(circle at 1px 1px, rgba(250,247,242,0.04) 1px, transparent 0)',
         backgroundSize: '14px 14px',
-        color: '#fff',
-        fontFamily: '-apple-system, BlinkMacSystemFont, sans-serif',
+        color: MILK,
+        fontFamily: '-apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", sans-serif',
         padding: '40px 28px',
         display: 'flex',
         flexDirection: 'column',
@@ -208,11 +211,11 @@ export default function WidgetTerritorio() {
     >
       {/* riga data (dinamica) */}
       <div>
-        <div style={{ fontSize: '1.05rem', fontWeight: 700 }}>{dataLine}</div>
+        <div style={{ fontSize: '1rem', fontWeight: 500, letterSpacing: '-0.01em' }}>{dataLine}</div>
       </div>
 
-      {/* giorno grande corsivo (dinamico) */}
-      <div style={{ fontFamily: "'Snell Roundhand','Brush Script MT',cursive", fontStyle: 'italic', fontWeight: 700, fontSize: 'clamp(3rem,6vw,4.4rem)', lineHeight: 1, color: ACCENT }}>
+      {/* giorno grande corsivo (dinamico) — rimpicciolito e centrato; font e colore INVARIATI */}
+      <div style={{ fontFamily: "'Snell Roundhand','Brush Script MT',cursive", fontStyle: 'italic', fontWeight: 700, fontSize: 'clamp(2.2rem,4vw,3.1rem)', lineHeight: 1.05, color: ACCENT, textAlign: 'center' }}>
         {giornoCap}
       </div>
 
@@ -229,12 +232,12 @@ export default function WidgetTerritorio() {
         <div style={headStyle}>{meseNome}</div>
         <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between' }}>
           {settimana.map((d, i) => (
-            <span key={i} style={{ fontSize: d.oggi ? '1.4rem' : '.92rem', color: d.oggi ? '#fff' : 'rgba(255,255,255,0.32)', fontWeight: d.oggi ? 700 : 400 }}>{d.n}</span>
+            <span key={i} style={{ fontSize: d.oggi ? '1.4rem' : '.92rem', color: d.oggi ? MILK : 'rgba(250,247,242,0.35)', fontWeight: d.oggi ? 600 : 300 }}>{d.n}</span>
           ))}
         </div>
         <div style={{ position: 'relative', marginTop: '16px' }}>
-          <div style={{ borderTop: '1px solid rgba(255,255,255,0.22)' }} />
-          <span style={{ position: 'absolute', right: 0, top: '50%', transform: 'translateY(-50%)', background: '#161616', paddingLeft: '10px', fontSize: '1.3rem', fontWeight: 700, fontVariantNumeric: 'tabular-nums' }}>{ora}</span>
+          <div style={{ borderTop: '1px solid rgba(250,247,242,0.2)' }} />
+          <span style={{ position: 'absolute', right: 0, top: '50%', transform: 'translateY(-50%)', background: '#161616', paddingLeft: '10px', fontSize: '1.25rem', fontWeight: 500, fontVariantNumeric: 'tabular-nums' }}>{ora}</span>
         </div>
       </div>
 
@@ -244,30 +247,30 @@ export default function WidgetTerritorio() {
         <div style={{ ...subStyle, marginBottom: '12px' }}>
           {eventi !== null ? `${eventi} eventi certificati nel territorio.` : 'Conteggio eventi\u2026'}
         </div>
-        <div style={{ position: 'relative', height: '4px', borderRadius: '3px', background: 'rgba(255,255,255,0.14)' }}>
+        <div style={{ position: 'relative', height: '4px', borderRadius: '3px', background: 'rgba(250,247,242,0.14)' }}>
           <div style={{ position: 'absolute', left: 0, top: 0, height: '4px', borderRadius: '3px', width: `${pieno}%`, background: ACCENT, transition: 'width 1s ease' }} />
-          <div style={{ position: 'absolute', top: '-4px', left: `${pieno}%`, width: '12px', height: '12px', borderRadius: '50%', background: '#fff', transform: 'translateX(-50%)' }} />
+          <div style={{ position: 'absolute', top: '-4px', left: `${pieno}%`, width: '12px', height: '12px', borderRadius: '50%', background: MILK, transform: 'translateX(-50%)' }} />
         </div>
       </div>
 
       {/* CANALI INGESTIONE - da qui arrivano i micro-eventi */}
       <div>
-        <div style={{ fontSize: '.58rem', letterSpacing: '.18em', color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', marginBottom: '6px' }}>Invia un evento</div>
+        <div style={eyebrowStyle}>Invia un evento</div>
         {CANALI.map(({ label, tipo }) => (
           <a key={label} href="https://adrianochtribo-dot.github.io/MAMMUTH-EV/developer/console.html" target="_blank" style={voceStyle}>
             <span style={cerchioStyle}><Icona tipo={tipo} /></span>
-            <span style={{ fontSize: '.9rem' }}>{label}</span>
+            <span style={{ fontSize: '.9rem', fontWeight: 300 }}>{label}</span>
           </a>
         ))}
       </div>
 
       {/* FONTI TERRITORIALI */}
       <div>
-        <div style={{ fontSize: '.58rem', letterSpacing: '.18em', color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', marginBottom: '6px' }}>Fonti del territorio</div>
+        <div style={eyebrowStyle}>Fonti del territorio</div>
         {FONTI.map(({ label, tipo }) => (
           <a key={label} href="https://adrianochtribo-dot.github.io/MAMMUTH-EV/developer/console.html" target="_blank" style={voceStyle}>
             <span style={cerchioStyle}><Icona tipo={tipo} /></span>
-            <span style={{ fontSize: '.9rem' }}>{label}</span>
+            <span style={{ fontSize: '.9rem', fontWeight: 300 }}>{label}</span>
           </a>
         ))}
       </div>
