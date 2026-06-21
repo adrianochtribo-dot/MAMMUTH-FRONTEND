@@ -12,22 +12,23 @@ export default function Home() {
         <WidgetTerritorio />
       </div>
 
-      {/* HOME — margine sinistro pari alla barra (300px) */}
+      {/* HOME */}
       <div className="min-h-screen font-sans antialiased overflow-x-hidden lg:ml-[300px]" style={{backgroundColor:'#F5F5F7',color:'#1D1D1F'}}>
 
-      {/* NAVBAR */}
+      {/* NAVBAR — tutti i tasti puntano al Developer Portal */}
       <nav className="sticky top-0 z-50 backdrop-blur-md border-b lg:ml-0" style={{backgroundColor:'rgba(245,245,247,0.8)',borderColor:'rgba(0,0,0,0.08)'}}>
         <div className="mx-auto px-6 h-12 flex items-center justify-between" style={{maxWidth:'64rem'}}>
           <span className="font-semibold text-sm tracking-widest" style={{color:'#1D1D1F'}}>MAMMUTH•EVENTS™</span>
           <div className="flex gap-6 text-xs" style={{color:'rgba(29,29,31,0.6)'}}>
             <a href={DEVELOPER_PORTAL} target="_blank" className="hover:opacity-100 transition" style={{color:'inherit'}}>Presidia il tuo borgo</a>
             <a href={DEVELOPER_PORTAL} target="_blank" className="hover:opacity-100 transition" style={{color:'inherit'}}>Eventi nel territorio</a>
+            <a href={DEVELOPER_PORTAL} target="_blank" className="hover:opacity-100 transition" style={{color:'inherit'}}>Archivio MAMMUTH</a>
             <a href={DEVELOPER_PORTAL} target="_blank" className="hover:opacity-100 transition" style={{color:'inherit'}}>Developer Portal</a>
           </div>
         </div>
       </nav>
 
-      {/* HERO — foto a destra + titolo + due tasti */}
+      {/* HERO — titolo + foto + due tasti */}
       <section className="px-6 pt-10 pb-16" style={{maxWidth:'72rem',margin:'0 auto'}}>
         <div className="text-center mb-8">
           <span className="text-xs font-medium tracking-widest uppercase mb-4 block" style={{color:'#FBBF24'}}>
@@ -51,7 +52,7 @@ export default function Home() {
           <p className="mt-2 text-xl font-light" style={{color:'rgba(29,29,31,0.6)'}}>Where Communities Come Alive™</p>
         </div>
 
-        {/* FOTO HERO — bordo arrotondato, contorno sottile */}
+        {/* FOTO HERO */}
         <div style={{borderRadius:'24px',overflow:'hidden',border:'1px solid rgba(0,0,0,0.08)',boxShadow:'0 10px 40px rgba(0,0,0,0.12)'}}>
           <img
             src="/259F52F8-A996-4991-AA2A-10402167F511_1_201_a.jpeg"
