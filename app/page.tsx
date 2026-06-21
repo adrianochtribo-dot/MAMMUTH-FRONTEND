@@ -2,6 +2,7 @@ import Link from 'next/link'
 import MappaEventi from '@/components/MappaEventi'
 import WidgetTerritorio from '@/components/WidgetTerritorio'
 import MammuthCommunity from '@/components/MammuthCommunity'
+import SentinellaForm from '@/components/SentinellaForm'
 
 export default function Home() {
   return (
@@ -99,9 +100,10 @@ export default function Home() {
         <MappaEventi />
       </section>
 
-      {/* WE MAMMUTH COMMUNITY — mappa di copertura delle Sentinelle */}
+      {/* WE MAMMUTH COMMUNITY — mappa di copertura + candidatura Sentinella */}
       <section id="community" className="max-w-5xl mx-auto px-6 py-16">
         <MammuthCommunity />
+        <SentinellaForm />
       </section>
 
       {/* BENTO GRID */}
