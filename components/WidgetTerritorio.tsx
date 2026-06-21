@@ -2,8 +2,8 @@
 
 import { useState, useEffect } from 'react'
 
-const SUPABASE_URL = 'https://pwfsuefyiiwnltikcdho.supabase.co'
-const SUPABASE_KEY = 'sb_publishable_5sHvYKX3YL7RI_RwpJK9FQ_-A2G7H63'
+const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL || ''
+const SUPABASE_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || ''
 const ACCENT = '#E83E7C'
 const MILK = '#FAF7F2'
 
