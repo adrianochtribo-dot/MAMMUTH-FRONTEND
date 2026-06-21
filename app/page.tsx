@@ -15,14 +15,13 @@ export default function Home() {
       {/* HOME */}
       <div className="min-h-screen font-sans antialiased overflow-x-hidden lg:ml-[300px]" style={{backgroundColor:'#F5F5F7',color:'#1D1D1F'}}>
 
-      {/* NAVBAR — tutti i tasti puntano al Developer Portal */}
+      {/* NAVBAR */}
       <nav className="sticky top-0 z-50 backdrop-blur-md border-b lg:ml-0" style={{backgroundColor:'rgba(245,245,247,0.8)',borderColor:'rgba(0,0,0,0.08)'}}>
         <div className="mx-auto px-6 h-12 flex items-center justify-between" style={{maxWidth:'64rem'}}>
           <span className="font-semibold text-sm tracking-widest" style={{color:'#1D1D1F'}}>MAMMUTH•EVENTS™</span>
           <div className="flex gap-6 text-xs" style={{color:'rgba(29,29,31,0.6)'}}>
-            <a href={DEVELOPER_PORTAL} target="_blank" className="hover:opacity-100 transition" style={{color:'inherit'}}>Presidia il tuo borgo</a>
-            <a href={DEVELOPER_PORTAL} target="_blank" className="hover:opacity-100 transition" style={{color:'inherit'}}>Eventi nel territorio</a>
-            <a href={DEVELOPER_PORTAL} target="_blank" className="hover:opacity-100 transition" style={{color:'inherit'}}>Archivio MAMMUTH</a>
+            <Link href="/eventi" className="hover:opacity-100 transition" style={{color:'inherit'}}>Presidia il tuo borgo</Link>
+            <Link href="/eventi" className="hover:opacity-100 transition" style={{color:'inherit'}}>Eventi nel territorio</Link>
             <a href={DEVELOPER_PORTAL} target="_blank" className="hover:opacity-100 transition" style={{color:'inherit'}}>Developer Portal</a>
           </div>
         </div>
@@ -61,14 +60,14 @@ export default function Home() {
           />
         </div>
 
-        {/* DUE TASTI */}
+        {/* DUE TASTI — aprono la pagina /eventi */}
         <div className="mt-8 flex flex-wrap items-center justify-center gap-4">
-          <a href={DEVELOPER_PORTAL} target="_blank" className="px-6 py-3 rounded-full text-sm font-medium transition-opacity hover:opacity-80" style={{background:'linear-gradient(135deg, #8B7CF6, #E879A0)', color:'#fff', textDecoration:'none'}}>
+          <Link href="/eventi" className="px-6 py-3 rounded-full text-sm font-medium transition-opacity hover:opacity-80" style={{background:'linear-gradient(135deg, #8B7CF6, #E879A0)', color:'#fff', textDecoration:'none'}}>
             Presidia il tuo borgo →
-          </a>
-          <a href={DEVELOPER_PORTAL} target="_blank" className="px-6 py-3 rounded-full text-sm font-medium transition-opacity hover:opacity-80" style={{background:'rgba(0,0,0,0.06)', color:'#1D1D1F', textDecoration:'none'}}>
+          </Link>
+          <Link href="/eventi" className="px-6 py-3 rounded-full text-sm font-medium transition-opacity hover:opacity-80" style={{background:'rgba(0,0,0,0.06)', color:'#1D1D1F', textDecoration:'none'}}>
             Eventi nel territorio →
-          </a>
+          </Link>
         </div>
 
         {/* BADGE LIVE */}
