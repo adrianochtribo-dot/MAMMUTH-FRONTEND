@@ -214,8 +214,8 @@ export default function WidgetTerritorio() {
         <div style={{ fontSize: '1rem', fontWeight: 500, letterSpacing: '-0.01em' }}>{dataLine}</div>
       </div>
 
-      {/* giorno grande corsivo (dinamico) — rimpicciolito e centrato; font e colore INVARIATI */}
-      <div style={{ fontFamily: "'Snell Roundhand','Brush Script MT',cursive", fontStyle: 'italic', fontWeight: 700, fontSize: 'clamp(2.2rem,4vw,3.1rem)', lineHeight: 1.05, color: ACCENT, textAlign: 'center' }}>
+      {/* giorno grande corsivo (dinamico) — adattato alla colonna; font e colore INVARIATI */}
+      <div style={{ fontFamily: "'Snell Roundhand','Brush Script MT',cursive", fontStyle: 'italic', fontWeight: 700, fontSize: 'clamp(1.9rem,3.2vw,2.6rem)', lineHeight: 1.15, color: ACCENT, textAlign: 'center', padding: '4px 0' }}>
         {giornoCap}
       </div>
 
