@@ -3,7 +3,6 @@ import MappaEventi from '@/components/MappaEventi'
 import WidgetTerritorio from '@/components/WidgetTerritorio'
 import MammuthCommunity from '@/components/MammuthCommunity'
 import SentinellaForm from '@/components/SentinellaForm'
-import ArchivioStatus from '@/components/ArchivioStatus'
 
 export default function Home() {
   return (
@@ -11,11 +10,6 @@ export default function Home() {
       {/* WIDGET BARRA FISSA A SINISTRA — non strizza la home, ci galleggia sopra */}
       <div className="hidden lg:block" style={{position:'fixed',top:0,left:0,bottom:0,zIndex:40}}>
         <WidgetTerritorio />
-      </div>
-
-      {/* BADGE STATO ARCHIVIO — fisso in alto a destra, legge archivio_freschezza */}
-      <div style={{position:'fixed',top:16,right:16,zIndex:60}}>
-        <ArchivioStatus />
       </div>
 
       {/* HOME — con margine sinistro pari alla barra (300px) per allinearsi senza sforare */}
@@ -101,7 +95,7 @@ export default function Home() {
           Eventi nel territorio
         </h2>
         <p className="text-sm mb-8" style={{color:'rgba(29,29,31,0.5)'}}>
-          68 eventi verificati ATLAS•EVENTA™ — Sermoneta, Bassiano, Sezze, Ponza (Provincia di Latina) — verità territoriale, zero dati inventati.
+          73 eventi nel sistema · 69 validati ATLAS•EVENTA™ — Sermoneta, Bassiano, Sezze, Ponza (Provincia di Latina) — verità territoriale, zero dati inventati.
         </p>
         <MappaEventi />
       </section>
@@ -129,7 +123,7 @@ export default function Home() {
           {[
             { label: 'Safety Engine', value: 'v1.0.0', desc: 'Fruin LoS + Cosine Similarity storica', accent: '#8B7CF6' },
             { label: 'Risk Score', value: '0.0–1.0', desc: 'Calcolo predittivo crowd crush', accent: '#E879A0' },
-            { label: 'Dataset', value: '68 eventi', desc: 'KUS-3620 certified — TCF 100%', accent: '#38BDF8' },
+            { label: 'Dataset', value: '73 eventi', desc: 'KUS-3620 certified — TCF 100%', accent: '#38BDF8' },
             { label: 'Stack', value: 'Next.js 14', desc: 'Vercel Edge CDN + Railway FastAPI', accent: '#34D399' },
             { label: 'Database', value: 'Supabase', desc: 'PostgreSQL + PostGIS ready', accent: '#FBBF24' },
             { label: 'Pipeline', value: 'ATLAS•EVENTA™', desc: 'WhatsApp → Claude → JSON certificato', accent: '#8B7CF6' },
