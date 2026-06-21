@@ -3,6 +3,7 @@ import MappaEventi from '@/components/MappaEventi'
 import WidgetTerritorio from '@/components/WidgetTerritorio'
 import MammuthCommunity from '@/components/MammuthCommunity'
 import SentinellaForm from '@/components/SentinellaForm'
+import ArchivioStatus from '@/components/ArchivioStatus'
 
 export default function Home() {
   return (
@@ -10,6 +11,11 @@ export default function Home() {
       {/* WIDGET BARRA FISSA A SINISTRA — non strizza la home, ci galleggia sopra */}
       <div className="hidden lg:block" style={{position:'fixed',top:0,left:0,bottom:0,zIndex:40}}>
         <WidgetTerritorio />
+      </div>
+
+      {/* BADGE STATO ARCHIVIO — fisso in alto a destra, legge archivio_freschezza */}
+      <div style={{position:'fixed',top:16,right:16,zIndex:60}}>
+        <ArchivioStatus />
       </div>
 
       {/* HOME — con margine sinistro pari alla barra (300px) per allinearsi senza sforare */}
