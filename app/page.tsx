@@ -2,6 +2,7 @@ import Link from 'next/link'
 import WidgetTerritorio from '@/components/WidgetTerritorio'
 import ArchivioStatus from '@/components/ArchivioStatus'
 import EsploraEventiHero from '@/components/EsploraEventiHero'
+import MobileBar from '@/components/MobileBar'
 
 const DEVELOPER_PORTAL = 'https://adrianochtribo-dot.github.io/MAMMUTH-EV/developer/developer-index.html'
 const DATI_VALIDATI = 'https://adrianochtribo-dot.github.io/MAMMUTH-EV/developer/validati.html'
@@ -10,10 +11,13 @@ const CONSOLE_TERRITORIO = 'https://adrianochtribo-dot.github.io/MAMMUTH-EV/deve
 export default function Home() {
   return (
     <>
-      {/* WIDGET BARRA FISSA A SINISTRA — intatta */}
+      {/* WIDGET BARRA FISSA A SINISTRA — intatta (solo desktop) */}
       <div className="hidden lg:block" style={{position:'fixed',top:0,left:0,bottom:0,zIndex:40}}>
         <WidgetTerritorio />
       </div>
+
+      {/* MOBILE — stessa barra raggiungibile via drawer ☰ (solo iPhone/<lg) */}
+      <MobileBar />
 
       {/* HOME */}
       <div className="min-h-screen font-sans antialiased overflow-x-hidden lg:ml-[300px]" style={{backgroundColor:'#F5F5F7',color:'#1D1D1F'}}>
