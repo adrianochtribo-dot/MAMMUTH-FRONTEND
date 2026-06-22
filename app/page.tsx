@@ -35,6 +35,11 @@ export default function Home() {
       {/* HERO — titolo + foto + tasti */}
       <section className="px-6 pt-10 pb-16" style={{maxWidth:'72rem',margin:'0 auto'}}>
         <div className="text-center mb-8">
+          <img
+            src="/mammuth-mark.png"
+            alt="MAMMUTH"
+            style={{height:'clamp(72px, 10vw, 120px)', width:'auto', margin:'0 auto 20px', display:'block'}}
+          />
           <span className="text-xs font-medium tracking-widest uppercase mb-4 block" style={{color:'#FBBF24'}}>
             Territorio Pilota — Sermoneta, Provincia di Latina
           </span>
