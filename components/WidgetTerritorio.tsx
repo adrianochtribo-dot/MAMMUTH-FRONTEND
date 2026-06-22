@@ -19,7 +19,7 @@ const TERRITORIO = { lat: 41.55, lng: 12.99, nome: 'Sermoneta' }
 // Compila qui i tuoi handle UNA volta sola. Lascia '' per disattivare una voce.
 // ============================================================================
 const INVIO = {
-  whatsappNumero: '39XXXXXXXXXX',   // numero WhatsApp Mammuth, formato internazionale SENZA + (es. 393331234567)
+  whatsappNumero: '393209712872',   // numero WhatsApp Mammuth, formato internazionale SENZA + (es. 393331234567)
   telegramUser: 'mammuth_events',   // @username Telegram (bot o canale), senza @
   messengerPage: 'mammuth.events',  // username/ID della Pagina Facebook
   instagramUser: 'mammuth.events',  // username Instagram, senza @
