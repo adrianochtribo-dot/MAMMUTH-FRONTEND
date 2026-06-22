@@ -20,7 +20,7 @@ export default function Home() {
         <div className="mx-auto px-6 h-12 flex items-center justify-between" style={{maxWidth:'64rem'}}>
           <span className="font-semibold text-sm tracking-widest" style={{color:'#1D1D1F'}}>MAMMUTH™</span>
           <div className="flex gap-6 text-xs" style={{color:'rgba(29,29,31,0.6)'}}>
-            <Link href="/eventi#presidia" className="hover:opacity-100 transition" style={{color:'inherit'}}>Presidia il tuo borgo</Link>
+            <Link href="/eventi#presidia" className="hover:opacity-100 transition" style={{color:'inherit'}}>Presidia il tuo Borgo</Link>
             <Link href="/eventi" className="hover:opacity-100 transition" style={{color:'inherit'}}>Eventi nel territorio</Link>
             <a href={DEVELOPER_PORTAL} target="_blank" className="hover:opacity-100 transition" style={{color:'inherit'}}>Developer Portal</a>
           </div>
