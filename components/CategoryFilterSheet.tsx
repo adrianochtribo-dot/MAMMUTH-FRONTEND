@@ -202,6 +202,11 @@ interface CategoryFilterSheetProps {
   onChange: (filters: ActiveFilters) => void;
   resultCount?: number;
   categoryCounts?: Record<string, number>;
+  // 'floating' (default) = pillola fissa in basso sulla mappa.
+  // 'hero' = pillola inline col gradiente viola->rosa, per la landing.
+  variant?: 'floating' | 'hero';
+  // chiamata quando l'utente tocca "Mostra N eventi" (es. vai a /mappa).
+  onShowResults?: () => void;
 }
 
 // Schiarisce/scurisce un colore hex (#RRGGBB) miscelandolo con bianco/nero
@@ -250,6 +255,8 @@ export default function CategoryFilterSheet({
   onChange,
   resultCount,
   categoryCounts = {},
+  variant = 'floating',
+  onShowResults,
 }: CategoryFilterSheetProps) {
   const [open, setOpen] = useState(false);
   const [expandedMacro, setExpandedMacro] = useState<string | null>(null);
@@ -315,30 +322,53 @@ export default function CategoryFilterSheet({
 
   return (
     <>
-      <button
-        onClick={() => setOpen(true)}
-        className="fixed bottom-6 left-1/2 -translate-x-1/2 z-30
-                   flex items-center gap-2 rounded-full
-                   bg-white/60 backdrop-blur-xl backdrop-saturate-150
-                   px-5 py-3 shadow-lg shadow-black/10
-                   border border-white/40
-                   text-[15px] font-medium text-[#1D1D1F]
-                   transition-transform active:scale-95
-                   hover:shadow-xl hover:bg-white/70"
-        aria-label="Esplora categorie eventi"
-      >
-        <Search size={18} strokeWidth={2.2} />
-        <span>Esplora eventi</span>
-        {totalActive > 0 && (
-          <span
-            className="ml-1 flex h-5 min-w-5 items-center justify-center
-                       rounded-full bg-[#1D1D1F]/80 backdrop-blur px-1.5 text-[11px]
-                       font-semibold text-white"
-          >
-            {totalActive}
-          </span>
-        )}
-      </button>
+      {variant === 'hero' ? (
+        <button
+          onClick={() => setOpen(true)}
+          className="inline-flex items-center gap-2 rounded-full px-6 py-3
+                     text-sm font-medium text-white
+                     transition-opacity hover:opacity-80 active:scale-95"
+          style={{ background: 'linear-gradient(135deg, #8B7CF6, #E879A0)' }}
+          aria-label="Esplora categorie eventi"
+        >
+          <Search size={18} strokeWidth={2.2} />
+          <span>Esplora eventi</span>
+          {totalActive > 0 && (
+            <span
+              className="ml-1 flex h-5 min-w-5 items-center justify-center
+                         rounded-full bg-white/25 px-1.5 text-[11px]
+                         font-semibold text-white"
+            >
+              {totalActive}
+            </span>
+          )}
+        </button>
+      ) : (
+        <button
+          onClick={() => setOpen(true)}
+          className="fixed bottom-6 left-1/2 -translate-x-1/2 z-30
+                     flex items-center gap-2 rounded-full
+                     bg-white/60 backdrop-blur-xl backdrop-saturate-150
+                     px-5 py-3 shadow-lg shadow-black/10
+                     border border-white/40
+                     text-[15px] font-medium text-[#1D1D1F]
+                     transition-transform active:scale-95
+                     hover:shadow-xl hover:bg-white/70"
+          aria-label="Esplora categorie eventi"
+        >
+          <Search size={18} strokeWidth={2.2} />
+          <span>Esplora eventi</span>
+          {totalActive > 0 && (
+            <span
+              className="ml-1 flex h-5 min-w-5 items-center justify-center
+                         rounded-full bg-[#1D1D1F]/80 backdrop-blur px-1.5 text-[11px]
+                         font-semibold text-white"
+            >
+              {totalActive}
+            </span>
+          )}
+        </button>
+      )}
 
       <Drawer.Root open={open} onOpenChange={setOpen}>
         <Drawer.Portal>
@@ -534,7 +564,10 @@ export default function CategoryFilterSheet({
 
             <div className="border-t border-white/40 bg-white/50 backdrop-blur-xl px-5 py-3.5 sm:rounded-b-2xl">
               <button
-                onClick={() => setOpen(false)}
+                onClick={() => {
+                  if (onShowResults) onShowResults();
+                  setOpen(false);
+                }}
                 className="w-full rounded-full bg-[#1D1D1F]/90 backdrop-blur py-3
                            text-[15px] font-semibold text-white
                            transition-transform active:scale-[0.98]"
