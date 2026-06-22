@@ -22,8 +22,11 @@ export default function EventiPage() {
         <MappaEventi />
       </section>
 
-      <section id="presidia" className="max-w-5xl mx-auto px-6 py-16">
+      <section className="max-w-5xl mx-auto px-6 py-16">
         <MammuthCommunity />
+      </section>
+
+      <section id="presidia" className="max-w-5xl mx-auto px-6 py-16">
         <SentinellaForm />
       </section>
 
