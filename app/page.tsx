@@ -22,7 +22,7 @@ export default function Home() {
           <div className="flex gap-6 text-xs" style={{color:'rgba(29,29,31,0.6)'}}>
             <Link href="/presidia" className="hover:opacity-100 transition" style={{color:'inherit'}}>Presidia il tuo Borgo</Link>
             <Link href="/community" className="hover:opacity-100 transition" style={{color:'inherit'}}>Community</Link>
-            <Link href="/eventi" className="hover:opacity-100 transition" style={{color:'inherit'}}>Eventi nel territorio</Link>
+            <Link href="/mappa" className="hover:opacity-100 transition" style={{color:'inherit'}}>Mappa</Link>
             <a href={DEVELOPER_PORTAL} target="_blank" className="hover:opacity-100 transition" style={{color:'inherit'}}>Developer Portal</a>
           </div>
         </div>
@@ -61,7 +61,7 @@ export default function Home() {
           />
         </div>
 
-        {/* DUE TASTI — aprono la pagina /eventi */}
+        {/* DUE TASTI — aprono la pagina /eventi (ora redirect a /mappa) */}
         <div className="mt-8 flex flex-wrap items-center justify-center gap-4">
           <Link href="/eventi" className="px-6 py-3 rounded-full text-sm font-medium transition-opacity hover:opacity-80" style={{background:'linear-gradient(135deg, #8B7CF6, #E879A0)', color:'#fff', textDecoration:'none'}}>
             Presidia il tuo borgo →
