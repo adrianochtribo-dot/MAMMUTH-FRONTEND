@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import WidgetTerritorio from '@/components/WidgetTerritorio'
 import ArchivioStatus from '@/components/ArchivioStatus'
+import EsploraEventiHero from '@/components/EsploraEventiHero'
 
 const DEVELOPER_PORTAL = 'https://adrianochtribo-dot.github.io/MAMMUTH-EV/developer/developer-index.html'
 
@@ -28,7 +29,7 @@ export default function Home() {
         </div>
       </nav>
 
-      {/* HERO — titolo + foto + due tasti */}
+      {/* HERO — titolo + foto + tasti */}
       <section className="px-6 pt-10 pb-16" style={{maxWidth:'72rem',margin:'0 auto'}}>
         <div className="text-center mb-8">
           <span className="text-xs font-medium tracking-widest uppercase mb-4 block" style={{color:'#FBBF24'}}>
@@ -61,11 +62,9 @@ export default function Home() {
           />
         </div>
 
-        {/* DUE TASTI — aprono la pagina /eventi (ora redirect a /mappa) */}
+        {/* TASTI — Esplora eventi (Event•Control) + Eventi nel territorio */}
         <div className="mt-8 flex flex-wrap items-center justify-center gap-4">
-          <Link href="/eventi" className="px-6 py-3 rounded-full text-sm font-medium transition-opacity hover:opacity-80" style={{background:'linear-gradient(135deg, #8B7CF6, #E879A0)', color:'#fff', textDecoration:'none'}}>
-            Presidia il tuo borgo →
-          </Link>
+          <EsploraEventiHero />
           <Link href="/eventi" className="px-6 py-3 rounded-full text-sm font-medium transition-opacity hover:opacity-80" style={{background:'rgba(0,0,0,0.06)', color:'#1D1D1F', textDecoration:'none'}}>
             Eventi nel territorio →
           </Link>
