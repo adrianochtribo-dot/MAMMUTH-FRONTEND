@@ -4,6 +4,7 @@ import ArchivioStatus from '@/components/ArchivioStatus'
 import EsploraEventiHero from '@/components/EsploraEventiHero'
 
 const DEVELOPER_PORTAL = 'https://adrianochtribo-dot.github.io/MAMMUTH-EV/developer/developer-index.html'
+const DATI_VALIDATI = 'https://adrianochtribo-dot.github.io/MAMMUTH-EV/developer/validati.html'
 
 export default function Home() {
   return (
@@ -75,12 +76,12 @@ export default function Home() {
           />
         </div>
 
-        {/* TASTI — Esplora eventi (Event•Control) + Eventi nel territorio */}
+        {/* TASTI — Esplora eventi (Event•Control) + Eventi nel territorio (→ Dati Validati) */}
         <div className="mt-8 flex flex-wrap items-center justify-center gap-4">
           <EsploraEventiHero />
-          <Link href="/eventi" className="px-6 py-3 rounded-full text-sm font-medium transition-opacity hover:opacity-80" style={{background:'rgba(0,0,0,0.06)', color:'#1D1D1F', textDecoration:'none'}}>
+          <a href={DATI_VALIDATI} target="_blank" rel="noopener noreferrer" className="px-6 py-3 rounded-full text-sm font-medium transition-opacity hover:opacity-80" style={{background:'rgba(0,0,0,0.06)', color:'#1D1D1F', textDecoration:'none'}}>
             Eventi nel territorio →
-          </Link>
+          </a>
         </div>
 
         {/* BADGE LIVE */}
