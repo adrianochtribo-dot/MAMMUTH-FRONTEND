@@ -5,6 +5,7 @@ import EsploraEventiHero from '@/components/EsploraEventiHero'
 
 const DEVELOPER_PORTAL = 'https://adrianochtribo-dot.github.io/MAMMUTH-EV/developer/developer-index.html'
 const DATI_VALIDATI = 'https://adrianochtribo-dot.github.io/MAMMUTH-EV/developer/validati.html'
+const CONSOLE_TERRITORIO = 'https://adrianochtribo-dot.github.io/MAMMUTH-EV/developer/console.html'
 
 export default function Home() {
   return (
@@ -25,7 +26,8 @@ export default function Home() {
             <Link href="/presidia" className="hover:opacity-100 transition" style={{color:'inherit'}}>Presidia il tuo Borgo</Link>
             <Link href="/community" className="hover:opacity-100 transition" style={{color:'inherit'}}>Community</Link>
             <Link href="/mappa" className="hover:opacity-100 transition" style={{color:'inherit'}}>Mappa</Link>
-            <a href={DEVELOPER_PORTAL} target="_blank" className="hover:opacity-100 transition" style={{color:'inherit'}}>Developer Portal</a>
+            <a href={CONSOLE_TERRITORIO} target="_blank" rel="noopener noreferrer" className="hover:opacity-100 transition" style={{color:'inherit'}}>Territorio</a>
+            <a href={DEVELOPER_PORTAL} target="_blank" rel="noopener noreferrer" className="hover:opacity-100 transition" style={{color:'inherit'}}>Developer Portal</a>
           </div>
         </div>
       </nav>
