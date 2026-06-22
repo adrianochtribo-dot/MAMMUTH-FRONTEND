@@ -203,7 +203,7 @@ interface CategoryFilterSheetProps {
   resultCount?: number;
   categoryCounts?: Record<string, number>;
   // 'floating' (default) = pillola fissa in basso sulla mappa.
-  // 'hero' = pillola inline nera, per la landing.
+  // 'hero' = pillola inline col gradiente viola->rosa, per la landing.
   variant?: 'floating' | 'hero';
   // chiamata quando l'utente tocca "Mostra N eventi" (es. vai a /mappa).
   onShowResults?: () => void;
@@ -373,20 +373,21 @@ export default function CategoryFilterSheet({
       <Drawer.Root open={open} onOpenChange={setOpen}>
         <Drawer.Portal>
           <Drawer.Overlay
-            className="fixed inset-0 z-40 backdrop-blur-[3px]"
-            style={{ background: 'rgba(0,0,0,0.55)' }}
+            className="fixed inset-0 z-40 backdrop-blur-[2px]"
+            style={{ background: 'rgba(0,0,0,0.40)' }}
           />
           <Drawer.Content
+            style={{ fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Text', 'SF Pro Display', 'Helvetica Neue', sans-serif" }}
             className="fixed inset-x-0 bottom-0 z-50 flex max-h-[85vh]
-                       flex-col rounded-t-2xl
-                       bg-[#0B0B0C] backdrop-blur-2xl
-                       border border-white/10 border-b-0
-                       shadow-[0_-8px_40px_rgba(0,0,0,0.45)]
+                       flex-col rounded-t-[20px]
+                       bg-white/95 backdrop-blur-2xl backdrop-saturate-150
+                       border border-black/[0.06] border-b-0
+                       shadow-[0_-8px_40px_rgba(0,0,0,0.12)]
                        sm:left-1/2 sm:right-auto sm:top-auto sm:bottom-6
                        sm:-translate-x-1/2 sm:w-[420px]
-                       sm:max-h-[700px] sm:rounded-2xl sm:border-b"
+                       sm:max-h-[700px] sm:rounded-[20px] sm:border-b"
           >
-            <div className="mx-auto mt-2.5 h-1 w-9 rounded-full bg-white/25 sm:hidden" />
+            <div className="mx-auto mt-2.5 h-1 w-9 rounded-full bg-black/15 sm:hidden" />
 
             <div className="flex items-center justify-between px-5 pt-4">
               <button
@@ -406,13 +407,13 @@ export default function CategoryFilterSheet({
             </div>
 
             <div className="px-5 pt-1 pb-3 text-center">
-              <h2 className="flex items-center justify-center gap-2 text-[26px] font-extrabold uppercase tracking-tight text-white">
-                <span>EVENT</span>
-                <span className="font-light text-white/40">|</span>
-                <span className="font-light tracking-wide">Control</span>
+              <h2 className="flex items-center justify-center gap-2 text-[21px] font-semibold tracking-tight text-[#1D1D1F]">
+                <span className="uppercase">EVENT</span>
+                <span className="font-light text-black/20">|</span>
+                <span className="font-normal text-[#1D1D1F]/60">Control</span>
               </h2>
               {typeof resultCount === 'number' && (
-                <p className="text-[11px] text-white/55 mt-1 uppercase tracking-[0.18em]">
+                <p className="text-[12px] text-black/45 mt-1">
                   {resultCount} eventi corrispondenti
                 </p>
               )}
@@ -435,34 +436,26 @@ export default function CategoryFilterSheet({
                     <div key={cat.id}>
                       <div
                         onClick={() => toggleMacro(cat.id)}
-                        style={{ backgroundColor: cat.color }}
-                        className={`flex items-center gap-3 rounded-2xl px-4 py-3.5
-                                    shadow-[0_14px_32px_-8px_rgba(0,0,0,0.28)] cursor-pointer
-                                    transition-transform active:scale-[0.98]
-                                    ${hasSelection ? 'ring-2 ring-[#1D1D1F]/25' : ''}`}
+                        className={`flex items-center gap-3 rounded-2xl px-4 py-3.5 bg-white
+                                    border cursor-pointer
+                                    transition-colors active:scale-[0.99]
+                                    ${hasSelection ? 'border-[#1D1D1F]/40 bg-[#FAFAFA]' : 'border-black/[0.08]'}`}
                       >
-                        <div
-                          style={iconCircle(cat.glow, 44)}
-                          className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full"
-                        >
-                          <Icon size={21} strokeWidth={2.2} color="#FFFFFF" />
+                        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#F2F2F7]">
+                          <Icon size={19} strokeWidth={2} color="#1D1D1F" />
                         </div>
 
-                        <span className="flex-1 text-[16px] font-bold text-[#1D1D1F]">
+                        <span className="flex-1 text-[16px] font-medium text-[#1D1D1F]">
                           {cat.label}
                         </span>
 
                         {hasSelection && (
-                          <Check size={18} strokeWidth={2.5} color={cat.glow} />
+                          <Check size={18} strokeWidth={2.5} className="text-[#1D1D1F]" />
                         )}
 
-                        <div
-                          style={iconCircle(cat.glow, 32)}
-                          className="flex h-8 min-w-8 items-center justify-center
-                                     rounded-full px-2.5 text-[14px] font-bold text-white"
-                        >
+                        <span className="flex h-7 min-w-7 items-center justify-center rounded-full bg-[#F2F2F7] px-2 text-[13px] font-semibold text-[#1D1D1F]">
                           {count}
-                        </div>
+                        </span>
 
                         {cat.subcategories.length > 0 && (
                           <button
@@ -475,9 +468,9 @@ export default function CategoryFilterSheet({
                                        hover:bg-black/5 transition-colors"
                           >
                             {isExpanded ? (
-                              <ChevronDown size={18} strokeWidth={2.5} className="text-[#1D1D1F]/45" />
+                              <ChevronDown size={18} strokeWidth={2} className="text-black/30" />
                             ) : (
-                              <ChevronRight size={18} strokeWidth={2.5} className="text-[#1D1D1F]/45" />
+                              <ChevronRight size={18} strokeWidth={2} className="text-black/30" />
                             )}
                           </button>
                         )}
@@ -492,11 +485,11 @@ export default function CategoryFilterSheet({
                                 key={sub.id}
                                 onClick={() => toggleSub(cat.id, sub.id)}
                                 style={{
-                                  backgroundColor: subActive ? cat.glow : 'rgba(255,255,255,0.7)',
-                                  color: subActive ? '#FFFFFF' : '#3A3A3C',
+                                  backgroundColor: subActive ? '#1D1D1F' : '#F2F2F7',
+                                  color: subActive ? '#FFFFFF' : '#1D1D1F',
                                 }}
                                 className="rounded-xl px-3 py-2.5 text-[13px] font-medium text-left
-                                           shadow-sm transition-colors active:scale-[0.98]"
+                                           transition-colors active:scale-[0.98]"
                               >
                                 {sub.label}
                               </button>
@@ -525,43 +518,35 @@ export default function CategoryFilterSheet({
                     <div
                       key={cat.id}
                       onClick={() => toggleMacro(cat.id)}
-                      style={{ backgroundColor: cat.color }}
-                      className={`flex items-center gap-2.5 rounded-2xl px-3 py-3
-                                  shadow-[0_8px_20px_-6px_rgba(0,0,0,0.22)] cursor-pointer
-                                  transition-transform active:scale-[0.97]
-                                  ${count === 0 ? 'opacity-65' : ''}
-                                  ${hasSelection ? 'ring-2 ring-[#1D1D1F]/25 opacity-100' : ''}`}
+                      className={`flex items-center gap-2.5 rounded-2xl px-3 py-3 bg-white
+                                  border cursor-pointer
+                                  transition-colors active:scale-[0.98]
+                                  ${count === 0 ? 'opacity-50' : ''}
+                                  ${hasSelection ? 'border-[#1D1D1F]/40 bg-[#FAFAFA]' : 'border-black/[0.08]'}`}
                     >
-                      <div
-                        style={iconCircle(cat.glow, 36)}
-                        className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full"
-                      >
-                        <Icon size={16} strokeWidth={2.2} color="#FFFFFF" />
+                      <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#F2F2F7]">
+                        <Icon size={16} strokeWidth={2} color="#1D1D1F" />
                       </div>
-                      <span className="flex-1 text-[13px] font-semibold text-[#1D1D1F] leading-tight">
+                      <span className="flex-1 text-[13px] font-medium text-[#1D1D1F] leading-tight">
                         {cat.label}
                       </span>
-                      <div
-                        style={iconCircle(cat.glow, 24)}
-                        className="flex h-6 min-w-6 items-center justify-center
-                                   rounded-full px-1.5 text-[12px] font-bold text-white"
-                      >
+                      <span className="flex h-6 min-w-6 items-center justify-center rounded-full bg-[#F2F2F7] px-1.5 text-[12px] font-semibold text-[#1D1D1F]">
                         {count}
-                      </div>
+                      </span>
                     </div>
                   );
                 })}
               </div>
             </div>
 
-            <div className="border-t border-white/10 bg-[#0B0B0C] px-5 py-3.5 sm:rounded-b-2xl">
+            <div className="border-t border-black/[0.06] bg-white/80 backdrop-blur-xl px-5 py-3.5 sm:rounded-b-[20px]">
               <button
                 onClick={() => {
                   if (onShowResults) onShowResults();
                   setOpen(false);
                 }}
-                className="w-full rounded-full bg-white py-3
-                           text-[15px] font-semibold text-[#0B0B0C]
+                className="w-full rounded-full bg-[#1D1D1F] py-3
+                           text-[15px] font-semibold text-white
                            transition-transform active:scale-[0.98]"
               >
                 Mostra {typeof resultCount === 'number' ? resultCount : ''} eventi
