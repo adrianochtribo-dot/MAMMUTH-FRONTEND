@@ -203,7 +203,7 @@ interface CategoryFilterSheetProps {
   resultCount?: number;
   categoryCounts?: Record<string, number>;
   // 'floating' (default) = pillola fissa in basso sulla mappa.
-  // 'hero' = pillola inline col gradiente viola->rosa, per la landing.
+  // 'hero' = pillola inline nera, per la landing.
   variant?: 'floating' | 'hero';
   // chiamata quando l'utente tocca "Mostra N eventi" (es. vai a /mappa).
   onShowResults?: () => void;
@@ -328,7 +328,7 @@ export default function CategoryFilterSheet({
           className="inline-flex items-center gap-2 rounded-full px-6 py-3
                      text-sm font-medium text-white
                      transition-opacity hover:opacity-80 active:scale-95"
-          style={{ background: 'linear-gradient(135deg, #8B7CF6, #E879A0)' }}
+          style={{ background: '#0B0B0C' }}
           aria-label="Esplora categorie eventi"
         >
           <Search size={18} strokeWidth={2.2} />
@@ -373,27 +373,20 @@ export default function CategoryFilterSheet({
       <Drawer.Root open={open} onOpenChange={setOpen}>
         <Drawer.Portal>
           <Drawer.Overlay
-            className="fixed inset-0 z-40 backdrop-blur-[2px]"
-            style={{
-              background:
-                'radial-gradient(circle at 12% 8%,  #FCEBE3 0%, transparent 45%),' +
-                'radial-gradient(circle at 88% 15%, #87AAC6 0%, transparent 50%),' +
-                'radial-gradient(circle at 75% 55%, #456D91 0%, transparent 55%),' +
-                'radial-gradient(circle at 25% 92%, #C2D0DD 0%, transparent 45%),' +
-                'rgba(0,0,0,0.10)',
-            }}
+            className="fixed inset-0 z-40 backdrop-blur-[3px]"
+            style={{ background: 'rgba(0,0,0,0.55)' }}
           />
           <Drawer.Content
             className="fixed inset-x-0 bottom-0 z-50 flex max-h-[85vh]
                        flex-col rounded-t-2xl
-                       bg-white/75 backdrop-blur-2xl backdrop-saturate-150
-                       border border-white/40 border-b-0
-                       shadow-[0_-8px_40px_rgba(0,0,0,0.12)]
+                       bg-[#0B0B0C] backdrop-blur-2xl
+                       border border-white/10 border-b-0
+                       shadow-[0_-8px_40px_rgba(0,0,0,0.45)]
                        sm:left-1/2 sm:right-auto sm:top-auto sm:bottom-6
                        sm:-translate-x-1/2 sm:w-[420px]
                        sm:max-h-[700px] sm:rounded-2xl sm:border-b"
           >
-            <div className="mx-auto mt-2.5 h-1 w-9 rounded-full bg-black/15 sm:hidden" />
+            <div className="mx-auto mt-2.5 h-1 w-9 rounded-full bg-white/25 sm:hidden" />
 
             <div className="flex items-center justify-between px-5 pt-4">
               <button
@@ -413,14 +406,13 @@ export default function CategoryFilterSheet({
             </div>
 
             <div className="px-5 pt-1 pb-3 text-center">
-              <h2
-                className="text-[22px] font-bold tracking-tight bg-clip-text text-transparent
-                           bg-gradient-to-r from-[#8B5CF6] via-[#EC4899] to-[#F59E0B]"
-              >
-                Event•Control
+              <h2 className="flex items-center justify-center gap-2 text-[26px] font-extrabold uppercase tracking-tight text-white">
+                <span>EVENT</span>
+                <span className="font-light text-white/40">|</span>
+                <span className="font-light tracking-wide">Control</span>
               </h2>
               {typeof resultCount === 'number' && (
-                <p className="text-[12px] text-[#3A3A3C]/70 mt-0.5">
+                <p className="text-[11px] text-white/55 mt-1 uppercase tracking-[0.18em]">
                   {resultCount} eventi corrispondenti
                 </p>
               )}
@@ -562,14 +554,14 @@ export default function CategoryFilterSheet({
               </div>
             </div>
 
-            <div className="border-t border-white/40 bg-white/50 backdrop-blur-xl px-5 py-3.5 sm:rounded-b-2xl">
+            <div className="border-t border-white/10 bg-[#0B0B0C] px-5 py-3.5 sm:rounded-b-2xl">
               <button
                 onClick={() => {
                   if (onShowResults) onShowResults();
                   setOpen(false);
                 }}
-                className="w-full rounded-full bg-[#1D1D1F]/90 backdrop-blur py-3
-                           text-[15px] font-semibold text-white
+                className="w-full rounded-full bg-white py-3
+                           text-[15px] font-semibold text-[#0B0B0C]
                            transition-transform active:scale-[0.98]"
               >
                 Mostra {typeof resultCount === 'number' ? resultCount : ''} eventi
