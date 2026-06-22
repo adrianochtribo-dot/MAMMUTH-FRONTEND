@@ -1,105 +1,848 @@
-'use client';
+'use client'
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState, useCallback, useMemo } from 'react'
+import CategoryFilterSheet, {
+  CATEGORIES,
+  useFilteredEvents,
+  ActiveFilters,
+} from './CategoryFilterSheet'
 
-const SUPABASE_URL = 'https://pwfsuefyiiwnltikcdho.supabase.co';
-const SUPABASE_KEY = 'sb_publishable_5sHvYKX3YL7RI_RwpJK9FQ_-A2G7H63';
+const SUPABASE_URL = 'https://pwfsuefyiiwnltikcdho.supabase.co'
+const SUPABASE_KEY = 'sb_publishable_5sHvYKX3YL7RI_RwpJK9FQ_-A2G7H63'
 
-type Freschezza = {
-  totale_eventi: number;
-  totale_validati: number;
-  nuovi_24h: number;
-  nuovi_7g: number;
-  aggiornati_24h: number;
-  ultimo_inserimento: string | null;
-  ultimo_aggiornamento: string | null;
-  in_lavorazione: number;
-};
+const CATEGORIA_COLORI: Record<string, string> = Object.fromEntries(
+  CATEGORIES.map((c) => [c.id, c.glow])
+)
+const COLORE_DEFAULT = '#8B7355'
 
-export default function ArchivioStatus() {
-  const [data, setData] = useState<Freschezza | null>(null);
-  const [loading, setLoading] = useState(true);
+function getColore(categoria: string): string {
+  return CATEGORIA_COLORI[categoria] || COLORE_DEFAULT
+}
+
+function getEtichetta(categoria: string): string {
+  return CATEGORIES.find((c) => c.id === categoria)?.label || categoria
+}
+
+function jitter(lat: number, lng: number, index: number): [number, number] {
+  const angle = (index * 137.5 * Math.PI) / 180
+  const radius = 0.0003 + (index % 5) * 0.0001
+  return [lat + Math.cos(angle) * radius, lng + Math.sin(angle) * radius]
+}
+
+// --- METEO & ABBIGLIAMENTO ---
+// Mappatura codici WMO (Open-Meteo) -> emoji/descrizione, sottoinsieme
+// dei codici piu' comuni in Italia centrale.
+function getMeteoIcona(code: number): string {
+  if (code === 0) return '☀️'
+  if (code === 1 || code === 2) return '🌤️'
+  if (code === 3) return '☁️'
+  if (code === 45 || code === 48) return '🌫️'
+  if (code >= 51 && code <= 57) return '🌦️'
+  if (code >= 61 && code <= 67) return '🌧️'
+  if (code >= 71 && code <= 77) return '🌨️'
+  if (code >= 80 && code <= 82) return '🌧️'
+  if (code >= 95) return '⛈️'
+  return '🌡️'
+}
+
+function getMeteoDescrizione(code: number): string {
+  if (code === 0) return 'Cielo sereno'
+  if (code === 1 || code === 2) return 'Poco nuvoloso'
+  if (code === 3) return 'Nuvoloso'
+  if (code === 45 || code === 48) return 'Nebbia'
+  if (code >= 51 && code <= 57) return 'Pioggia leggera'
+  if (code >= 61 && code <= 67) return 'Pioggia'
+  if (code >= 71 && code <= 77) return 'Neve'
+  if (code >= 80 && code <= 82) return 'Rovesci'
+  if (code >= 95) return 'Temporale'
+  return 'Variabile'
+}
+
+// Consiglio abbigliamento da previsione reale (temperature + probabilita' pioggia)
+function getConsiglioAbbigliamento(tempMax: number, precipProb: number): string {
+  let base = ''
+  if (tempMax >= 28) base = 'Abbigliamento leggero, cappello e protezione solare'
+  else if (tempMax >= 22) base = 'Abbigliamento leggero, qualcosa per la sera'
+  else if (tempMax >= 15) base = 'Vestiti a strati, giacca leggera'
+  else if (tempMax >= 8) base = 'Giacca, maglione, strati'
+  else base = 'Giacca pesante, sciarpa e guanti'
+
+  if (precipProb >= 50) base += ' — possibile pioggia, porta un ombrello'
+  return base
+}
+
+// Indicazione stagionale generica per Sermoneta/Lazio, basata sul mese
+// dell'evento (0=gennaio ... 11=dicembre). Usata solo per eventi oltre
+// 14 giorni, quando una previsione reale non esiste ancora: e' una media
+// climatica nota, non una previsione - dichiarata come tale in UI.
+function getIndicazioneStagionale(mese: number): { emoji: string; testo: string; abbigliamento: string } {
+  if (mese === 11 || mese === 0 || mese === 1) {
+    return {
+      emoji: '❄️',
+      testo: 'Inverno a Sermoneta: clima freddo, possibili piogge (in genere 2–12°C)',
+      abbigliamento: 'Giacca pesante, strati, sciarpa',
+    }
+  }
+  if (mese >= 2 && mese <= 4) {
+    return {
+      emoji: '🌦️',
+      testo: 'Primavera a Sermoneta: clima mite e variabile (in genere 10–20°C)',
+      abbigliamento: 'Vestiti a strati, giacca leggera, occhio alla pioggia',
+    }
+  }
+  if (mese >= 5 && mese <= 7) {
+    return {
+      emoji: '☀️',
+      testo: 'Estate a Sermoneta: clima caldo e secco (in genere 20–32°C)',
+      abbigliamento: 'Abbigliamento leggero, cappello, acqua',
+    }
+  }
+  return {
+    emoji: '🍂',
+    testo: 'Autunno a Sermoneta: clima mite con possibili piogge (in genere 12–22°C)',
+    abbigliamento: 'Vestiti a strati, giacca leggera, ombrello',
+  }
+}
+
+interface Evento {
+  id: number
+  titolo: string
+  categoria: string
+  sottocategoria: string | null
+  luogo: string
+  data_inizio: string
+  gratuito: boolean
+  prezzo_min: number | null
+  descrizione: string
+  lat: number
+  lng: number
+}
+
+export default function MappaEventi() {
+  const mapRef = useRef<HTMLDivElement>(null)
+  const mapInstanceRef = useRef<any>(null)
+  const leafletRef = useRef<any>(null)
+  const markersRef = useRef<any[]>([])
+  const [loading, setLoading] = useState(true)
+  const [eventi, setEventi] = useState<Evento[]>([])
+  const [error, setError] = useState<string | null>(null)
+  const [filters, setFilters] = useState<ActiveFilters>({ macro: [], sub: [] })
+  const [filtroGratuito, setFiltroGratuito] = useState<boolean>(false)
+  const [filtroTesto, setFiltroTesto] = useState<string>('')
+  const [ricercaAttiva, setRicercaAttiva] = useState<boolean>(false)
+  const [eventoSelezionato, setEventoSelezionato] = useState<Evento | null>(null)
+  const [mapReady, setMapReady] = useState(false)
+  const [meteo, setMeteo] = useState<{ tempMax: number; tempMin: number; precipProb: number; weathercode: number } | null>(null)
+  const [meteoLoading, setMeteoLoading] = useState(false)
+  const [meteoError, setMeteoError] = useState(false)
+
+  const eventiFiltrati = useFilteredEvents(eventi, filters).filter((ev) => {
+    if (filtroGratuito && !ev.gratuito) return false
+    if (
+      filtroTesto &&
+      !ev.titolo?.toLowerCase().includes(filtroTesto.toLowerCase()) &&
+      !ev.luogo?.toLowerCase().includes(filtroTesto.toLowerCase())
+    )
+      return false
+    return true
+  })
+
+  const categoryCounts = useMemo(() => {
+    const counts: Record<string, number> = {}
+    eventi.forEach((ev) => {
+      counts[ev.categoria] = (counts[ev.categoria] || 0) + 1
+    })
+    return counts
+  }, [eventi])
+
+  // Luoghi unici presenti nel dataset (frazioni, borghi, indirizzi -
+  // qualsiasi cosa sia nel campo `luogo`). Derivati dai dati reali,
+  // nessun valore inventato: oggi sono tutte le frazioni/borgate di
+  // Sermoneta presenti nei 40 eventi del pilot.
+  const luoghiUnici = useMemo(() => {
+    const set = new Set<string>()
+    eventi.forEach((ev) => {
+      if (ev.luogo) set.add(ev.luogo)
+    })
+    return Array.from(set).sort()
+  }, [eventi])
+
+  // Suggerimenti "Eventi": solo se l'utente ha digitato qualcosa,
+  // match sul titolo (stessa logica del filtro principale).
+  const suggerimentiEventi = useMemo(() => {
+    const q = filtroTesto.trim().toLowerCase()
+    if (!q) return []
+    return eventi
+      .filter((ev) => ev.titolo?.toLowerCase().includes(q))
+      .slice(0, 5)
+  }, [eventi, filtroTesto])
+
+  // Suggerimenti "Luoghi": se il campo è vuoto, mostra i luoghi
+  // disponibili (scoperta, come le destinazioni popolari di Airbnb a
+  // focus vuoto); se c'è testo, filtra per match.
+  const suggerimentiLuoghi = useMemo(() => {
+    const q = filtroTesto.trim().toLowerCase()
+    const list = q ? luoghiUnici.filter((l) => l.toLowerCase().includes(q)) : luoghiUnici
+    return list.slice(0, 6)
+  }, [luoghiUnici, filtroTesto])
+
+  const mostraSuggerimenti =
+    ricercaAttiva && (suggerimentiEventi.length > 0 || suggerimentiLuoghi.length > 0)
+
+  const aggiornaMarker = useCallback((eventiDaMostrare: Evento[]) => {
+    const L = leafletRef.current
+    const map = mapInstanceRef.current
+    if (!L || !map) return
+
+    markersRef.current.forEach((m) => m.remove())
+    markersRef.current = []
+
+    const bounds: [number, number][] = []
+    const coordCount: Record<string, number> = {}
+
+    // Bounding box allargato: include Provincia di Latina, Lazio meridionale
+    // e Isole Pontine (Ponza, Ventotene) — lat fino a 40.7
+    const LAT_MIN = 40.7
+    const LAT_MAX = 41.8
+    const LNG_MIN = 12.6
+    const LNG_MAX = 13.6
+
+    eventiDaMostrare.forEach((evento: Evento) => {
+      if (!evento.lat || !evento.lng) return
+      const lat = parseFloat(String(evento.lat))
+      const lng = parseFloat(String(evento.lng))
+      if (isNaN(lat) || isNaN(lng)) return
+      if (lat === 0 || lng === 0) return
+      if (lat < LAT_MIN || lat > LAT_MAX || lng < LNG_MIN || lng > LNG_MAX) return
+
+      const key = `${lat},${lng}`
+      coordCount[key] = (coordCount[key] || 0) + 1
+      const idx = coordCount[key] - 1
+      const [jLat, jLng] = idx === 0 ? [lat, lng] : jitter(lat, lng, idx)
+
+      bounds.push([jLat, jLng])
+
+      const colore = getColore(evento.categoria)
+      const icona = L.divIcon({
+        html: `<div style="width:18px;height:18px;border-radius:50%;background:${colore};border:2px solid white;box-shadow:0 2px 8px rgba(0,0,0,0.3);cursor:pointer"></div>`,
+        className: '',
+        iconSize: [18, 18],
+        iconAnchor: [9, 9],
+      })
+
+      const marker = L.marker([jLat, jLng], { icon: icona })
+        .addTo(map)
+        .on('click', () => setEventoSelezionato(evento))
+
+      markersRef.current.push(marker)
+    })
+
+    if (bounds.length > 0) {
+      if (bounds.length === 1) {
+        map.setView(bounds[0], 15)
+      } else {
+        try {
+          map.fitBounds(bounds, { padding: [40, 40], maxZoom: 14 })
+        } catch (e) {}
+      }
+    } else {
+      map.setView([41.534, 13.018], 13) // Centro Sermoneta
+    }
+  }, [])
 
   useEffect(() => {
-    let active = true;
-    (async () => {
+    if (typeof window === 'undefined') return
+    if (mapInstanceRef.current) return
+    if (!mapRef.current) return
+
+    const init = async () => {
       try {
+        const L = (await import('leaflet')).default
+        // @ts-ignore
+        await import('leaflet/dist/leaflet.css')
+        leafletRef.current = L
+
+        delete (L.Icon.Default.prototype as any)._getIconUrl
+        L.Icon.Default.mergeOptions({
+          iconRetinaUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png',
+          iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
+          shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
+        })
+
+        const map = L.map(mapRef.current!, {
+          center: [41.534, 13.018],
+          zoom: 13,
+          zoomControl: true,
+        })
+        mapInstanceRef.current = map
+
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+          attribution: '© OpenStreetMap contributors',
+          maxZoom: 19,
+        }).addTo(map)
+
+        setMapReady(true)
+
         const res = await fetch(
-          `${SUPABASE_URL}/rest/v1/archivio_freschezza?select=*`,
+          `${SUPABASE_URL}/rest/v1/eventi_view?select=id,titolo,categoria,sottocategoria,luogo,data_inizio,gratuito,prezzo_min,descrizione,lat,lng&order=data_inizio.asc`,
           {
             headers: {
               apikey: SUPABASE_KEY,
               Authorization: `Bearer ${SUPABASE_KEY}`,
             },
           }
-        );
-        if (!res.ok) throw new Error(`fetch ${res.status}`);
-        const rows = await res.json();
-        if (active && rows && rows.length > 0) setData(rows[0] as Freschezza);
-      } catch (e) {
-        // silenzioso: il badge semplicemente non appare se la vista non risponde
-      } finally {
-        if (active) setLoading(false);
+        )
+
+        if (!res.ok) throw new Error(`Errore fetch: ${res.status}`)
+        const data = await res.json()
+        setEventi(data)
+        setLoading(false)
+      } catch (err: any) {
+        setError(`Errore: ${err.message}`)
+        setLoading(false)
       }
-    })();
+    }
+
+    init()
+
     return () => {
-      active = false;
-    };
-  }, []);
+      if (mapInstanceRef.current) {
+        mapInstanceRef.current.remove()
+        mapInstanceRef.current = null
+      }
+    }
+  }, [])
 
-  if (loading || !data) return null;
+  useEffect(() => {
+    if (mapReady) {
+      aggiornaMarker(eventiFiltrati)
+    }
+  }, [eventiFiltrati, aggiornaMarker, mapReady])
 
-  const riferimento = data.ultimo_aggiornamento ?? data.ultimo_inserimento;
-  const oreDaUltimo = riferimento
-    ? (Date.now() - new Date(riferimento).getTime()) / 36e5
-    : Infinity;
-  const isLive = oreDaUltimo <= 48;
-  const dataFmt = riferimento
-    ? new Date(riferimento).toLocaleDateString('it-IT', {
-        day: 'numeric',
-        month: 'short',
-        hour: '2-digit',
-        minute: '2-digit',
+  // Meteo/abbigliamento per l'evento selezionato: previsione reale
+  // (Open-Meteo, gratuito, no API key) solo se l'evento e' entro 14 giorni
+  // E ha coordinate. Altrimenti nessuna chiamata: in render si mostra la
+  // nota stagionale generica (vedi getIndicazioneStagionale).
+  useEffect(() => {
+    setMeteo(null)
+    setMeteoError(false)
+
+    if (!eventoSelezionato?.data_inizio) return
+    if (!eventoSelezionato.lat || !eventoSelezionato.lng) return
+
+    const oggiMs = new Date().setHours(0, 0, 0, 0)
+    const eventoMs = new Date(eventoSelezionato.data_inizio).setHours(0, 0, 0, 0)
+    const giorni = Math.round((eventoMs - oggiMs) / 86400000)
+    if (giorni < 0 || giorni > 14) return
+
+    const dataStr = new Date(eventoSelezionato.data_inizio).toISOString().slice(0, 10)
+    setMeteoLoading(true)
+
+    fetch(
+      `https://api.open-meteo.com/v1/forecast?latitude=${eventoSelezionato.lat}&longitude=${eventoSelezionato.lng}&daily=temperature_2m_max,temperature_2m_min,precipitation_probability_max,weathercode&timezone=Europe%2FRome&start_date=${dataStr}&end_date=${dataStr}`
+    )
+      .then((res) => {
+        if (!res.ok) throw new Error('meteo non disponibile')
+        return res.json()
       })
-    : '—';
+      .then((data) => {
+        if (data?.daily?.temperature_2m_max?.length) {
+          setMeteo({
+            tempMax: data.daily.temperature_2m_max[0],
+            tempMin: data.daily.temperature_2m_min[0],
+            precipProb: data.daily.precipitation_probability_max[0],
+            weathercode: data.daily.weathercode[0],
+          })
+        } else {
+          setMeteoError(true)
+        }
+      })
+      .catch(() => setMeteoError(true))
+      .finally(() => setMeteoLoading(false))
+  }, [eventoSelezionato])
+
+  if (error) return <div style={{ color: '#E74C3C', padding: '16px' }}>{error}</div>
+
+  const coloreSelezionato = eventoSelezionato ? getColore(eventoSelezionato.categoria) : '#8B7CF6'
+  const dataFormattata = eventoSelezionato?.data_inizio
+    ? new Date(eventoSelezionato.data_inizio).toLocaleDateString('it-IT', {
+        weekday: 'long',
+        day: 'numeric',
+        month: 'long',
+        year: 'numeric',
+      })
+    : ''
+  const ingresso = eventoSelezionato?.gratuito
+    ? 'GRATUITO'
+    : eventoSelezionato?.prezzo_min
+    ? `Da €${eventoSelezionato.prezzo_min}`
+    : 'Vedi dettagli'
+
+  const giorniAEvento = eventoSelezionato?.data_inizio
+    ? Math.round(
+        (new Date(eventoSelezionato.data_inizio).setHours(0, 0, 0, 0) - new Date().setHours(0, 0, 0, 0)) /
+          86400000
+      )
+    : null
 
   return (
-    <div
-      style={{
-        display: 'flex',
-        alignItems: 'center',
-        gap: '12px',
-        padding: '10px 16px',
-        borderRadius: '999px',
-        background: 'rgba(20,22,28,0.72)',
-        backdropFilter: 'blur(12px)',
-        WebkitBackdropFilter: 'blur(12px)',
-        border: '1px solid rgba(255,255,255,0.08)',
-        fontFamily: "'DM Mono', monospace",
-        color: '#e8e8ea',
-        width: 'fit-content',
-        maxWidth: '100%',
-      }}
-    >
-      <span
-        style={{
-          width: '9px',
-          height: '9px',
-          borderRadius: '50%',
-          flexShrink: 0,
-          background: isLive ? '#34d399' : '#f59e0b',
-          boxShadow: isLive ? '0 0 8px rgba(52,211,153,0.8)' : 'none',
-        }}
-      />
-      <div style={{ display: 'flex', flexDirection: 'column', lineHeight: 1.3 }}>
-        <strong style={{ fontSize: '13px', letterSpacing: '0.02em' }}>
-          {isLive ? 'Archivio in aggiornamento' : 'Archivio MAMMUTH consolidato'}
-        </strong>
-        <span style={{ fontSize: '11px', opacity: 0.62 }}>
-          {data.totale_eventi} eventi · {data.totale_validati} validati ·{' '}
-          {data.in_lavorazione} in lavorazione · ultimo {dataFmt}
-        </span>
+    <div style={{ position: 'relative' }}>
+      {/* RICERCA TESTUALE */}
+      <div style={{ marginBottom: '16px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+        <div style={{ position: 'relative' }}>
+          <input
+            type="text"
+            placeholder="🔍 Cerca evento, frazione o luogo..."
+            value={filtroTesto}
+            onChange={(e) => setFiltroTesto(e.target.value)}
+            onFocus={() => setRicercaAttiva(true)}
+            onBlur={() => setTimeout(() => setRicercaAttiva(false), 120)}
+            style={{
+              width: '100%',
+              padding: '10px 36px 10px 16px',
+              borderRadius: '12px',
+              border: '1px solid rgba(0,0,0,0.1)',
+              fontSize: '14px',
+              background: 'white',
+              outline: 'none',
+              boxSizing: 'border-box',
+            }}
+          />
+          {filtroTesto && (
+            <button
+              onClick={() => setFiltroTesto('')}
+              aria-label="Cancella ricerca"
+              style={{
+                position: 'absolute',
+                right: '10px',
+                top: '50%',
+                transform: 'translateY(-50%)',
+                border: 'none',
+                background: 'rgba(0,0,0,0.06)',
+                color: 'rgba(29,29,31,0.5)',
+                borderRadius: '50%',
+                width: '20px',
+                height: '20px',
+                fontSize: '12px',
+                lineHeight: '20px',
+                cursor: 'pointer',
+                padding: 0,
+              }}
+            >
+              ✕
+            </button>
+          )}
+
+          {mostraSuggerimenti && (
+            <div
+              style={{
+                position: 'absolute',
+                top: 'calc(100% + 4px)',
+                left: 0,
+                right: 0,
+                background: 'white',
+                borderRadius: '12px',
+                border: '1px solid rgba(0,0,0,0.08)',
+                boxShadow: '0 8px 24px rgba(0,0,0,0.12)',
+                zIndex: 1100,
+                maxHeight: '280px',
+                overflowY: 'auto',
+                padding: '6px',
+              }}
+            >
+              {suggerimentiEventi.length > 0 && (
+                <>
+                  <div style={{ fontSize: '11px', fontWeight: 600, color: 'rgba(29,29,31,0.4)', padding: '6px 10px 2px', letterSpacing: '0.05em' }}>
+                    EVENTI
+                  </div>
+                  {suggerimentiEventi.map((ev) => (
+                    <div
+                      key={`sugg-ev-${ev.id}`}
+                      onMouseDown={(e) => e.preventDefault()}
+                      onClick={() => {
+                        setEventoSelezionato(ev)
+                        setFiltroTesto('')
+                        setRicercaAttiva(false)
+                      }}
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '8px',
+                        padding: '8px 10px',
+                        borderRadius: '8px',
+                        cursor: 'pointer',
+                      }}
+                      onMouseEnter={(e) => (e.currentTarget.style.background = 'rgba(0,0,0,0.04)')}
+                      onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
+                    >
+                      <div
+                        style={{
+                          width: '8px',
+                          height: '8px',
+                          borderRadius: '50%',
+                          background: getColore(ev.categoria),
+                          flexShrink: 0,
+                        }}
+                      />
+                      <div
+                        style={{
+                          fontSize: '13px',
+                          fontWeight: 500,
+                          color: '#1D1D1F',
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis',
+                          whiteSpace: 'nowrap',
+                        }}
+                      >
+                        {ev.titolo}
+                      </div>
+                    </div>
+                  ))}
+                </>
+              )}
+
+              {suggerimentiLuoghi.length > 0 && (
+                <>
+                  <div style={{ fontSize: '11px', fontWeight: 600, color: 'rgba(29,29,31,0.4)', padding: '6px 10px 2px', letterSpacing: '0.05em' }}>
+                    LUOGHI
+                  </div>
+                  {suggerimentiLuoghi.map((luogo, i) => (
+                    <div
+                      key={`sugg-luogo-${i}`}
+                      onMouseDown={(e) => e.preventDefault()}
+                      onClick={() => {
+                        // Se in questo luogo c'è un solo evento, vai
+                        // direttamente alla sua scheda (come per "EVENTI").
+                        // Se ce ne sono di più, filtra lista+mappa su questo
+                        // luogo cosi' l'utente scelga tra quelli.
+                        const eventiQui = eventi.filter((e) => e.luogo === luogo)
+                        if (eventiQui.length === 1) {
+                          setEventoSelezionato(eventiQui[0])
+                          setFiltroTesto('')
+                        } else {
+                          setFiltroTesto(luogo)
+                        }
+                        setRicercaAttiva(false)
+                      }}
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '8px',
+                        padding: '8px 10px',
+                        borderRadius: '8px',
+                        cursor: 'pointer',
+                      }}
+                      onMouseEnter={(e) => (e.currentTarget.style.background = 'rgba(0,0,0,0.04)')}
+                      onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
+                    >
+                      <span style={{ fontSize: '14px' }}>📍</span>
+                      <div
+                        style={{
+                          fontSize: '13px',
+                          color: '#1D1D1F',
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis',
+                          whiteSpace: 'nowrap',
+                        }}
+                      >
+                        {luogo}
+                      </div>
+                    </div>
+                  ))}
+                </>
+              )}
+            </div>
+          )}
+        </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <button
+            onClick={() => setFiltroGratuito(!filtroGratuito)}
+            style={{
+              padding: '4px 12px',
+              borderRadius: '20px',
+              border: 'none',
+              cursor: 'pointer',
+              fontSize: '11px',
+              fontWeight: 600,
+              background: filtroGratuito ? '#34D399' : 'rgba(0,0,0,0.06)',
+              color: filtroGratuito ? 'white' : 'rgba(29,29,31,0.6)',
+              transition: 'all 0.2s',
+            }}
+          >
+            🎟 Solo gratuiti
+          </button>
+          <span style={{ fontSize: '12px', color: 'rgba(29,29,31,0.4)' }}>
+            {loading ? '⏳' : `${eventiFiltrati.length} eventi`}
+          </span>
+        </div>
       </div>
+
+      {/* LISTA RISULTATI — appare quando si cerca o si filtra per categoria */}
+      {(filtroTesto || filters.macro.length > 0 || filters.sub.length > 0) &&
+        eventiFiltrati.length > 0 && (
+          <div
+            style={{
+              marginBottom: '16px',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '6px',
+              maxHeight: '220px',
+              overflowY: 'auto',
+              borderRadius: '12px',
+              border: '1px solid rgba(0,0,0,0.08)',
+              background: 'white',
+              padding: '8px',
+            }}
+          >
+            {eventiFiltrati.map((ev) => (
+              <div
+                key={ev.id}
+                onClick={() => setEventoSelezionato(ev)}
+                style={{
+                  padding: '10px 12px',
+                  borderRadius: '10px',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '10px',
+                  transition: 'background 0.15s',
+                }}
+                onMouseEnter={(e) => (e.currentTarget.style.background = 'rgba(0,0,0,0.04)')}
+                onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
+              >
+                <div
+                  style={{
+                    width: '10px',
+                    height: '10px',
+                    borderRadius: '50%',
+                    background: getColore(ev.categoria),
+                    flexShrink: 0,
+                  }}
+                />
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div
+                    style={{
+                      fontSize: '13px',
+                      fontWeight: 600,
+                      color: '#1D1D1F',
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                      whiteSpace: 'nowrap',
+                    }}
+                  >
+                    {ev.titolo}
+                  </div>
+                  <div style={{ fontSize: '11px', color: 'rgba(29,29,31,0.5)' }}>{ev.luogo}</div>
+                </div>
+                <span style={{ fontSize: '10px', color: 'rgba(29,29,31,0.35)', flexShrink: 0 }}>
+                  {getEtichetta(ev.categoria)}
+                </span>
+              </div>
+            ))}
+          </div>
+        )}
+
+      {/* NESSUN RISULTATO */}
+      {(filtroTesto || filters.macro.length > 0 || filters.sub.length > 0) &&
+        eventiFiltrati.length === 0 &&
+        !loading && (
+          <div
+            style={{
+              marginBottom: '16px',
+              padding: '16px',
+              borderRadius: '12px',
+              background: 'white',
+              border: '1px solid rgba(0,0,0,0.08)',
+              textAlign: 'center',
+              fontSize: '13px',
+              color: 'rgba(29,29,31,0.4)',
+            }}
+          >
+            Nessun evento trovato per questa ricerca
+          </div>
+        )}
+
+      {/* MAPPA */}
+      <div style={{ position: 'relative' }}>
+        {loading && (
+          <div
+            style={{
+              position: 'absolute',
+              inset: 0,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              background: '#F5F5F7',
+              zIndex: 1000,
+              height: '500px',
+              borderRadius: '8px',
+            }}
+          >
+            <span style={{ color: '#8B7CF6', fontSize: '14px' }}>🦣 Caricamento ATLAS•EVENTA™...</span>
+          </div>
+        )}
+        <div ref={mapRef} style={{ height: '500px', width: '100%', borderRadius: '8px' }} />
+
+        {/* Pulsante "Esplora eventi" + bottom sheet categorie */}
+        <CategoryFilterSheet
+          activeFilters={filters}
+          onChange={setFilters}
+          resultCount={eventiFiltrati.length}
+          categoryCounts={categoryCounts}
+        />
+      </div>
+
+      {/* MAMMUTH•KeySLIDE™ */}
+      {eventoSelezionato && (
+        <>
+          <div
+            onClick={() => setEventoSelezionato(null)}
+            style={{
+              position: 'fixed',
+              inset: 0,
+              background: 'rgba(0,0,0,0.3)',
+              zIndex: 1000,
+              backdropFilter: 'blur(2px)',
+            }}
+          />
+          <div
+            style={{
+              position: 'fixed',
+              bottom: 0,
+              left: 0,
+              right: 0,
+              zIndex: 1001,
+              background: 'white',
+              borderRadius: '20px 20px 0 0',
+              padding: '0 24px 40px',
+              boxShadow: '0 -4px 40px rgba(0,0,0,0.15)',
+              animation: 'slideUp 0.3s cubic-bezier(0.32,0.72,0,1)',
+              maxHeight: '85vh',
+              overflowY: 'auto',
+            }}
+          >
+            <div style={{ display: 'flex', justifyContent: 'center', paddingTop: '12px', paddingBottom: '16px' }}>
+              <div style={{ width: '36px', height: '4px', borderRadius: '2px', background: 'rgba(0,0,0,0.15)' }}></div>
+            </div>
+            <div
+              style={{
+                display: 'inline-block',
+                background: coloreSelezionato,
+                color: 'white',
+                fontSize: '11px',
+                padding: '4px 12px',
+                borderRadius: '20px',
+                marginBottom: '12px',
+                fontWeight: 600,
+                letterSpacing: '0.05em',
+              }}
+            >
+              {getEtichetta(eventoSelezionato.categoria)}
+            </div>
+            <h2 style={{ fontSize: '22px', fontWeight: 700, lineHeight: 1.2, color: '#1D1D1F', margin: '0 0 12px 0' }}>
+              {eventoSelezionato.titolo}
+            </h2>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: '20px' }}>
+              <div style={{ fontSize: '14px', color: 'rgba(29,29,31,0.6)' }}>📍 {eventoSelezionato.luogo || 'Sermoneta'}</div>
+              <div style={{ fontSize: '14px', color: 'rgba(29,29,31,0.6)' }}>🗓 {dataFormattata}</div>
+              <div style={{ fontSize: '14px', fontWeight: 600, color: coloreSelezionato }}>🎟 {ingresso}</div>
+            </div>
+
+            {/* METEO & ABBIGLIAMENTO — solo per eventi non passati */}
+            {giorniAEvento !== null && giorniAEvento >= 0 && (() => {
+              // Caso 1: entro 14 giorni e coordinate disponibili -> previsione reale
+              if (giorniAEvento <= 14 && eventoSelezionato.lat && eventoSelezionato.lng && !meteoError) {
+                if (meteoLoading || !meteo) {
+                  return (
+                    <div style={{ borderRadius: '12px', background: 'rgba(0,0,0,0.04)', padding: '12px 14px', marginBottom: '20px', fontSize: '13px', color: 'rgba(29,29,31,0.5)' }}>
+                      ⏳ Carico previsioni meteo...
+                    </div>
+                  )
+                }
+                const icona = getMeteoIcona(meteo.weathercode)
+                const descr = getMeteoDescrizione(meteo.weathercode)
+                const consiglio = getConsiglioAbbigliamento(meteo.tempMax, meteo.precipProb)
+                return (
+                  <div style={{ borderRadius: '12px', background: 'rgba(0,0,0,0.04)', padding: '12px 14px', marginBottom: '20px' }}>
+                    <div style={{ fontSize: '14px', fontWeight: 600, color: '#1D1D1F', marginBottom: '6px' }}>
+                      {icona} {descr} · {Math.round(meteo.tempMin)}°/{Math.round(meteo.tempMax)}°C
+                      {meteo.precipProb >= 30 ? ` · 💧 ${meteo.precipProb}%` : ''}
+                    </div>
+                    <div style={{ fontSize: '13px', color: 'rgba(29,29,31,0.65)' }}>👕 {consiglio}</div>
+                    <div style={{ fontSize: '10px', color: 'rgba(29,29,31,0.35)', marginTop: '6px' }}>
+                      Previsione Open-Meteo per il giorno dell'evento
+                    </div>
+                  </div>
+                )
+              }
+
+              // Caso 2: oltre 14 giorni (o senza coordinate) -> indicazione stagionale generica
+              const dataEvento = new Date(eventoSelezionato.data_inizio)
+              const stagione = getIndicazioneStagionale(dataEvento.getMonth())
+              return (
+                <div style={{ borderRadius: '12px', background: 'rgba(0,0,0,0.04)', padding: '12px 14px', marginBottom: '20px' }}>
+                  <div style={{ fontSize: '14px', fontWeight: 600, color: '#1D1D1F', marginBottom: '6px' }}>
+                    {stagione.emoji} {stagione.testo}
+                  </div>
+                  <div style={{ fontSize: '13px', color: 'rgba(29,29,31,0.65)' }}>👕 {stagione.abbigliamento}</div>
+                  <div style={{ fontSize: '10px', color: 'rgba(29,29,31,0.35)', marginTop: '6px' }}>
+                    Indicazione stagionale generica — previsione meteo reale disponibile da 14 giorni prima dell'evento
+                  </div>
+                </div>
+              )
+            })()}
+
+            {eventoSelezionato.descrizione && (
+              <p style={{ fontSize: '14px', lineHeight: 1.6, color: 'rgba(29,29,31,0.7)', marginBottom: '24px' }}>
+                {eventoSelezionato.descrizione}
+              </p>
+            )}
+            <div style={{ display: 'flex', gap: '12px' }}>
+              <button
+                onClick={() => window.location.href = `/evento/${eventoSelezionato.id}`}
+                style={{
+                  flex: 1,
+                  display: 'block',
+                  textAlign: 'center',
+                  background: '#8B7CF6',
+                  color: 'white',
+                  fontSize: '14px',
+                  fontWeight: 600,
+                  padding: '14px',
+                  borderRadius: '14px',
+                  border: 'none',
+                  cursor: 'pointer',
+                }}
+              >
+                Scopri di più →
+              </button>
+              <button
+                onClick={() => setEventoSelezionato(null)}
+                style={{
+                  padding: '14px 20px',
+                  borderRadius: '14px',
+                  border: 'none',
+                  background: 'rgba(0,0,0,0.06)',
+                  cursor: 'pointer',
+                  fontSize: '14px',
+                  color: 'rgba(29,29,31,0.6)',
+                }}
+              >
+                ✕
+              </button>
+            </div>
+            <div style={{ textAlign: 'center', marginTop: '16px', fontSize: '10px', color: 'rgba(29,29,31,0.3)', letterSpacing: '0.1em' }}>
+              MAMMUTH•KeySLIDE™
+            </div>
+          </div>
+          <style>{`
+            @keyframes slideUp {
+              from { transform: translateY(100%); }
+              to { transform: translateY(0); }
+            }
+          `}</style>
+        </>
+      )}
     </div>
-  );
+  )
 }
