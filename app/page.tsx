@@ -53,12 +53,25 @@ export default function Home() {
           <p className="mt-2 text-xl font-light" style={{color:'rgba(29,29,31,0.6)'}}>Where Communities Come Alive™</p>
         </div>
 
-        {/* FOTO HERO */}
-        <div style={{borderRadius:'24px',overflow:'hidden',border:'1px solid rgba(0,0,0,0.08)',boxShadow:'0 10px 40px rgba(0,0,0,0.12)'}}>
+        {/* FOTO HERO + TIMBRO KREATIO (angolo alto destro) */}
+        <div style={{position:'relative',borderRadius:'24px',overflow:'hidden',border:'1px solid rgba(0,0,0,0.08)',boxShadow:'0 10px 40px rgba(0,0,0,0.12)'}}>
           <img
             src="/259F52F8-A996-4991-AA2A-10402167F511_1_201_a.jpeg"
             alt="MAMMUTH•EVENTS — territorio"
             style={{width:'100%',height:'auto',display:'block'}}
+          />
+          <img
+            src="/kreatio-badge.png"
+            alt="Created by KREATIO — Nero Kaelum"
+            style={{
+              position:'absolute',
+              top:'clamp(12px, 3%, 28px)',
+              right:'clamp(12px, 3%, 28px)',
+              width:'clamp(64px, 12%, 128px)',
+              height:'auto',
+              filter:'drop-shadow(0 2px 10px rgba(0,0,0,0.35))',
+              pointerEvents:'none',
+            }}
           />
         </div>
 
