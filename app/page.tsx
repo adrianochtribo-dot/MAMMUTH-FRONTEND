@@ -18,16 +18,16 @@ export default function Home() {
       {/* NAVBAR */}
       <nav className="sticky top-0 z-50 backdrop-blur-md border-b lg:ml-0" style={{backgroundColor:'rgba(245,245,247,0.8)',borderColor:'rgba(0,0,0,0.08)'}}>
         <div className="mx-auto px-6 h-12 flex items-center justify-between" style={{maxWidth:'64rem'}}>
-          <span className="font-semibold text-sm tracking-widest" style={{color:'#1D1D1F'}}>MAMMUTH•EVENTS™</span>
+          <span className="font-semibold text-sm tracking-widest" style={{color:'#1D1D1F'}}>MAMMUTH™</span>
           <div className="flex gap-6 text-xs" style={{color:'rgba(29,29,31,0.6)'}}>
-            <Link href="/eventi" className="hover:opacity-100 transition" style={{color:'inherit'}}>Presidia il tuo borgo</Link>
+            <Link href="/eventi#presidia" className="hover:opacity-100 transition" style={{color:'inherit'}}>Presidia il tuo borgo</Link>
             <Link href="/eventi" className="hover:opacity-100 transition" style={{color:'inherit'}}>Eventi nel territorio</Link>
             <a href={DEVELOPER_PORTAL} target="_blank" className="hover:opacity-100 transition" style={{color:'inherit'}}>Developer Portal</a>
           </div>
         </div>
       </nav>
 
-      {/* HERO — titolo + foto + due tasti */}
+      {/* HERO — titolo + foto */}
       <section className="px-6 pt-10 pb-16" style={{maxWidth:'72rem',margin:'0 auto'}}>
         <div className="text-center mb-8">
           <span className="text-xs font-medium tracking-widest uppercase mb-4 block" style={{color:'#FBBF24'}}>
@@ -60,17 +60,7 @@ export default function Home() {
           />
         </div>
 
-        {/* DUE TASTI — aprono la pagina /eventi */}
-        <div className="mt-8 flex flex-wrap items-center justify-center gap-4">
-          <Link href="/eventi" className="px-6 py-3 rounded-full text-sm font-medium transition-opacity hover:opacity-80" style={{background:'linear-gradient(135deg, #8B7CF6, #E879A0)', color:'#fff', textDecoration:'none'}}>
-            Presidia il tuo borgo →
-          </Link>
-          <Link href="/eventi" className="px-6 py-3 rounded-full text-sm font-medium transition-opacity hover:opacity-80" style={{background:'rgba(0,0,0,0.06)', color:'#1D1D1F', textDecoration:'none'}}>
-            Eventi nel territorio →
-          </Link>
-        </div>
-
-        {/* BADGE LIVE */}
+        {/* DYNAMIC ISLAND — stato live archivio (al posto dei due tasti hero rimossi) */}
         <div className="mt-8 flex justify-center">
           <ArchivioStatus />
         </div>
