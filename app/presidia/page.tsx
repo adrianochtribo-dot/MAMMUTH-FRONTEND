@@ -247,11 +247,11 @@ export default function PresidiaPage() {
           </div>
         </div>
 
-        {/* COLONNA DESTRA — foto Sermoneta (solo desktop) */}
+        {/* COLONNA DESTRA — foto Villa Fogliano (solo desktop) */}
         <div className="presidia-col-foto">
-          <img className="presidia-foto" src="/sermoneta-presidia.jpg" alt="Sermoneta (Latina)" />
+          <img className="presidia-foto" src="/villa-fogliano.jpg" alt="Villa Fogliano (Latina)" />
           <div className="presidia-foto-overlay" aria-hidden="true" />
-          <span className="presidia-foto-cap">Sermoneta · Latina</span>
+          <span className="presidia-foto-cap">Villa Fogliano · Latina</span>
         </div>
       </div>
     </div>
