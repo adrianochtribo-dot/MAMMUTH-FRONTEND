@@ -44,9 +44,15 @@ export default function Home() {
             alt="MAMMUTH"
             style={{height:'clamp(72px, 10vw, 120px)', width:'auto', margin:'0 auto 20px', display:'block'}}
           />
-          <span className="text-xs font-medium tracking-widest uppercase mb-4 block" style={{color:'#FBBF24'}}>
-            Territorio Pilota — Sermoneta, Provincia di Latina
+          <span className="text-xs font-medium tracking-widest uppercase mb-3 block" style={{color:'#FBBF24'}}>
+            100% Italiano · Radici a Sermoneta (Lazio)
           </span>
+          <h2 className="font-bold tracking-tight mb-3" style={{color:'#1D1D1F', fontSize:'clamp(2rem, 6vw, 3.5rem)', lineHeight:1.05, letterSpacing:'-0.02em'}}>
+            Visione Planetaria
+          </h2>
+          <p className="mx-auto mb-4 text-base font-light" style={{color:'rgba(29,29,31,0.6)', maxWidth:'42rem', lineHeight:1.5}}>
+            Il primo protocollo globale del folklore. Un'architettura pilota nata in provincia di Latina e progettata con validazione nazionale per mappare, scalare e digitalizzare le tradizioni del mondo.
+          </p>
           <div className="w-full flex justify-center" style={{lineHeight:1}}>
             <svg viewBox="0 0 900 120" xmlns="http://www.w3.org/2000/svg" style={{width:'100%',maxWidth:'760px',height:'auto',overflow:'visible'}}>
               <defs>
