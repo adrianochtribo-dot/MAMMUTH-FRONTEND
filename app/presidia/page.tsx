@@ -249,7 +249,7 @@ export default function PresidiaPage() {
 
         {/* COLONNA DESTRA — foto Sermoneta (solo desktop) */}
         <div className="presidia-col-foto">
-          <img className="presidia-foto" src="/IMG_8090.jpeg" alt="Sermoneta (Latina)" />
+          <img className="presidia-foto" src="/sermoneta-presidia.jpg" alt="Sermoneta (Latina)" />
           <div className="presidia-foto-overlay" aria-hidden="true" />
           <span className="presidia-foto-cap">Sermoneta · Latina</span>
         </div>
