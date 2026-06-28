@@ -104,6 +104,89 @@ function getIndicazioneStagionale(mese: number): { emoji: string; testo: string;
   }
 }
 
+// --- RICERCA TERRITORIALE ---
+// Normalizzazione robusta: minuscolo, niente accenti, niente spazi ai bordi.
+// Cosi' "Latina", "latina", "LATINA" e input con accenti collassano sulla
+// stessa forma confrontabile. Usata sia dal filtro principale sia dai
+// suggerimenti.
+function normalizza(s: string | null | undefined): string {
+  if (!s) return ''
+  return s
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .trim()
+}
+
+// Provincia derivata dalle prime 3 cifre del codice ISTAT (autorita'
+// geografica MAMMUTH•GEONODE). Nessuna colonna `provincia` nel DB: e'
+// ridondante, la verita' e' nell'ISTAT. 059 = Latina (LT), 022 = Trento (TN).
+// [Probabile] mappa completa nazionale: le voci oltre LT/TN vanno verificate
+// in fase di espansione, ma un prefisso non mappato degrada in modo sicuro
+// (l'evento resta cercabile per titolo/luogo, solo la provincia non matcha).
+const PROVINCE_ISTAT: Record<string, { nome: string; sigla: string }> = {
+  '001': { nome: 'Torino', sigla: 'TO' }, '002': { nome: 'Vercelli', sigla: 'VC' },
+  '003': { nome: 'Novara', sigla: 'NO' }, '004': { nome: 'Cuneo', sigla: 'CN' },
+  '005': { nome: 'Asti', sigla: 'AT' }, '006': { nome: 'Alessandria', sigla: 'AL' },
+  '007': { nome: 'Aosta', sigla: 'AO' }, '008': { nome: 'Imperia', sigla: 'IM' },
+  '009': { nome: 'Savona', sigla: 'SV' }, '010': { nome: 'Genova', sigla: 'GE' },
+  '011': { nome: 'La Spezia', sigla: 'SP' }, '012': { nome: 'Varese', sigla: 'VA' },
+  '013': { nome: 'Como', sigla: 'CO' }, '014': { nome: 'Sondrio', sigla: 'SO' },
+  '015': { nome: 'Milano', sigla: 'MI' }, '016': { nome: 'Bergamo', sigla: 'BG' },
+  '017': { nome: 'Brescia', sigla: 'BS' }, '018': { nome: 'Pavia', sigla: 'PV' },
+  '019': { nome: 'Cremona', sigla: 'CR' }, '020': { nome: 'Mantova', sigla: 'MN' },
+  '021': { nome: 'Bolzano', sigla: 'BZ' }, '022': { nome: 'Trento', sigla: 'TN' },
+  '023': { nome: 'Verona', sigla: 'VR' }, '024': { nome: 'Vicenza', sigla: 'VI' },
+  '025': { nome: 'Belluno', sigla: 'BL' }, '026': { nome: 'Treviso', sigla: 'TV' },
+  '027': { nome: 'Venezia', sigla: 'VE' }, '028': { nome: 'Padova', sigla: 'PD' },
+  '029': { nome: 'Rovigo', sigla: 'RO' }, '030': { nome: 'Udine', sigla: 'UD' },
+  '031': { nome: 'Gorizia', sigla: 'GO' }, '032': { nome: 'Trieste', sigla: 'TS' },
+  '033': { nome: 'Piacenza', sigla: 'PC' }, '034': { nome: 'Parma', sigla: 'PR' },
+  '035': { nome: 'Reggio Emilia', sigla: 'RE' }, '036': { nome: 'Modena', sigla: 'MO' },
+  '037': { nome: 'Bologna', sigla: 'BO' }, '038': { nome: 'Ferrara', sigla: 'FE' },
+  '039': { nome: 'Ravenna', sigla: 'RA' }, '040': { nome: 'Forli-Cesena', sigla: 'FC' },
+  '041': { nome: 'Pesaro e Urbino', sigla: 'PU' }, '042': { nome: 'Ancona', sigla: 'AN' },
+  '043': { nome: 'Macerata', sigla: 'MC' }, '044': { nome: 'Ascoli Piceno', sigla: 'AP' },
+  '045': { nome: 'Massa-Carrara', sigla: 'MS' }, '046': { nome: 'Lucca', sigla: 'LU' },
+  '047': { nome: 'Pistoia', sigla: 'PT' }, '048': { nome: 'Firenze', sigla: 'FI' },
+  '049': { nome: 'Livorno', sigla: 'LI' }, '050': { nome: 'Pisa', sigla: 'PI' },
+  '051': { nome: 'Arezzo', sigla: 'AR' }, '052': { nome: 'Siena', sigla: 'SI' },
+  '053': { nome: 'Grosseto', sigla: 'GR' }, '054': { nome: 'Perugia', sigla: 'PG' },
+  '055': { nome: 'Terni', sigla: 'TR' }, '056': { nome: 'Viterbo', sigla: 'VT' },
+  '057': { nome: 'Rieti', sigla: 'RI' }, '058': { nome: 'Roma', sigla: 'RM' },
+  '059': { nome: 'Latina', sigla: 'LT' }, '060': { nome: 'Frosinone', sigla: 'FR' },
+  '061': { nome: 'Caserta', sigla: 'CE' }, '062': { nome: 'Benevento', sigla: 'BN' },
+  '063': { nome: 'Napoli', sigla: 'NA' }, '064': { nome: 'Avellino', sigla: 'AV' },
+  '065': { nome: 'Salerno', sigla: 'SA' }, '066': { nome: "L'Aquila", sigla: 'AQ' },
+  '067': { nome: 'Teramo', sigla: 'TE' }, '068': { nome: 'Pescara', sigla: 'PE' },
+  '069': { nome: 'Chieti', sigla: 'CH' }, '070': { nome: 'Campobasso', sigla: 'CB' },
+  '071': { nome: 'Foggia', sigla: 'FG' }, '072': { nome: 'Bari', sigla: 'BA' },
+  '073': { nome: 'Taranto', sigla: 'TA' }, '074': { nome: 'Brindisi', sigla: 'BR' },
+  '075': { nome: 'Lecce', sigla: 'LE' }, '076': { nome: 'Potenza', sigla: 'PZ' },
+  '077': { nome: 'Matera', sigla: 'MT' }, '078': { nome: 'Cosenza', sigla: 'CS' },
+  '079': { nome: 'Catanzaro', sigla: 'CZ' }, '080': { nome: 'Reggio Calabria', sigla: 'RC' },
+  '081': { nome: 'Trapani', sigla: 'TP' }, '082': { nome: 'Palermo', sigla: 'PA' },
+  '083': { nome: 'Messina', sigla: 'ME' }, '084': { nome: 'Agrigento', sigla: 'AG' },
+  '085': { nome: 'Caltanissetta', sigla: 'CL' }, '086': { nome: 'Enna', sigla: 'EN' },
+  '087': { nome: 'Catania', sigla: 'CT' }, '088': { nome: 'Ragusa', sigla: 'RG' },
+  '089': { nome: 'Siracusa', sigla: 'SR' }, '090': { nome: 'Sassari', sigla: 'SS' },
+  '091': { nome: 'Nuoro', sigla: 'NU' }, '092': { nome: 'Cagliari', sigla: 'CA' },
+  '093': { nome: 'Pordenone', sigla: 'PN' }, '094': { nome: 'Isernia', sigla: 'IS' },
+  '095': { nome: 'Oristano', sigla: 'OR' }, '096': { nome: 'Biella', sigla: 'BI' },
+  '097': { nome: 'Lecco', sigla: 'LC' }, '098': { nome: 'Lodi', sigla: 'LO' },
+  '099': { nome: 'Rimini', sigla: 'RN' }, '100': { nome: 'Prato', sigla: 'PO' },
+  '101': { nome: 'Crotone', sigla: 'KR' }, '102': { nome: 'Vibo Valentia', sigla: 'VV' },
+  '103': { nome: 'Verbano-Cusio-Ossola', sigla: 'VB' }, '108': { nome: 'Monza e della Brianza', sigla: 'MB' },
+  '109': { nome: 'Fermo', sigla: 'FM' }, '110': { nome: 'Barletta-Andria-Trani', sigla: 'BT' },
+  '111': { nome: 'Sud Sardegna', sigla: 'SU' },
+}
+
+function provinciaDaIstat(code: string | null | undefined): { nome: string; sigla: string } | null {
+  if (!code) return null
+  const prefisso = String(code).padStart(6, '0').slice(0, 3)
+  return PROVINCE_ISTAT[prefisso] ?? null
+}
+
 interface Evento {
   id: number
   titolo: string
@@ -116,6 +199,7 @@ interface Evento {
   descrizione: string
   lat: number
   lng: number
+  codice_istat: string | null
 }
 
 export default function MappaEventi() {
@@ -138,12 +222,17 @@ export default function MappaEventi() {
 
   const eventiFiltrati = useFilteredEvents(eventi, filters).filter((ev) => {
     if (filtroGratuito && !ev.gratuito) return false
-    if (
-      filtroTesto &&
-      !ev.titolo?.toLowerCase().includes(filtroTesto.toLowerCase()) &&
-      !ev.luogo?.toLowerCase().includes(filtroTesto.toLowerCase())
-    )
-      return false
+    const q = normalizza(filtroTesto)
+    if (q) {
+      const prov = provinciaDaIstat(ev.codice_istat)
+      // Sigla provincia: match esatto (altrimenti "lt" pescherebbe parole
+      // come "volto"). Tutto il resto: match per sottostringa normalizzata.
+      const matchSigla = prov ? normalizza(prov.sigla) === q : false
+      const matchTesto = [ev.titolo, ev.luogo, prov?.nome, ev.codice_istat].some(
+        (campo) => campo && normalizza(campo).includes(q)
+      )
+      if (!matchSigla && !matchTesto) return false
+    }
     return true
   })
 
@@ -186,8 +275,28 @@ export default function MappaEventi() {
     return list.slice(0, 6)
   }, [luoghiUnici, filtroTesto])
 
+  // Suggerimenti "Province": province realmente presenti nel dataset
+  // (derivate dall'ISTAT degli eventi), filtrate per nome o sigla.
+  // Cliccando, imposta il filtro sul nome provincia: la ricerca aggancia
+  // tutti gli eventi di quella provincia.
+  const suggerimentiProvince = useMemo(() => {
+    const q = normalizza(filtroTesto)
+    if (!q) return []
+    const mappa = new Map<string, { nome: string; sigla: string }>()
+    eventi.forEach((ev) => {
+      const p = provinciaDaIstat(ev.codice_istat)
+      if (p) mappa.set(p.sigla, p)
+    })
+    return Array.from(mappa.values())
+      .filter((p) => normalizza(p.nome).includes(q) || normalizza(p.sigla) === q)
+      .slice(0, 4)
+  }, [eventi, filtroTesto])
+
   const mostraSuggerimenti =
-    ricercaAttiva && (suggerimentiEventi.length > 0 || suggerimentiLuoghi.length > 0)
+    ricercaAttiva &&
+    (suggerimentiEventi.length > 0 ||
+      suggerimentiLuoghi.length > 0 ||
+      suggerimentiProvince.length > 0)
 
   const aggiornaMarker = useCallback((eventiDaMostrare: Evento[]) => {
     const L = leafletRef.current
@@ -284,7 +393,7 @@ export default function MappaEventi() {
         setMapReady(true)
 
         const res = await fetch(
-          `${SUPABASE_URL}/rest/v1/eventi_view?select=id,titolo,categoria,sottocategoria,luogo,data_inizio,gratuito,prezzo_min,descrizione,lat,lng&order=data_inizio.asc`,
+          `${SUPABASE_URL}/rest/v1/eventi_view?select=id,titolo,categoria,sottocategoria,luogo,data_inizio,gratuito,prezzo_min,descrizione,lat,lng,codice_istat&order=data_inizio.asc`,
           {
             headers: {
               apikey: SUPABASE_KEY,
@@ -392,7 +501,7 @@ export default function MappaEventi() {
         <div style={{ position: 'relative' }}>
           <input
             type="text"
-            placeholder="🔍 Cerca evento, frazione o luogo..."
+            placeholder="🔍 Cerca evento, luogo, provincia o sigla (es. Latina, LT)..."
             value={filtroTesto}
             onChange={(e) => setFiltroTesto(e.target.value)}
             onFocus={() => setRicercaAttiva(true)}
@@ -495,6 +604,47 @@ export default function MappaEventi() {
                         }}
                       >
                         {ev.titolo}
+                      </div>
+                    </div>
+                  ))}
+                </>
+              )}
+
+              {suggerimentiProvince.length > 0 && (
+                <>
+                  <div style={{ fontSize: '11px', fontWeight: 600, color: 'rgba(29,29,31,0.4)', padding: '6px 10px 2px', letterSpacing: '0.05em' }}>
+                    PROVINCE
+                  </div>
+                  {suggerimentiProvince.map((prov) => (
+                    <div
+                      key={`sugg-prov-${prov.sigla}`}
+                      onMouseDown={(e) => e.preventDefault()}
+                      onClick={() => {
+                        setFiltroTesto(prov.nome)
+                        setRicercaAttiva(false)
+                      }}
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '8px',
+                        padding: '8px 10px',
+                        borderRadius: '8px',
+                        cursor: 'pointer',
+                      }}
+                      onMouseEnter={(e) => (e.currentTarget.style.background = 'rgba(0,0,0,0.04)')}
+                      onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
+                    >
+                      <span style={{ fontSize: '14px' }}>🗺️</span>
+                      <div
+                        style={{
+                          fontSize: '13px',
+                          color: '#1D1D1F',
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis',
+                          whiteSpace: 'nowrap',
+                        }}
+                      >
+                        Provincia di {prov.nome} ({prov.sigla})
                       </div>
                     </div>
                   ))}
